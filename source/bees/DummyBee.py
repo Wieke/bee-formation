@@ -1,5 +1,7 @@
 class DummyBee:
-    self.awake = True
+
+    def __init__(self):
+        self.awake = True
     
     def hasArguments():
         return False
