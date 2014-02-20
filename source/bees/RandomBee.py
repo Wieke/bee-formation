@@ -21,6 +21,7 @@ class RandomBee:
         elif r < 0.75:
             return (0, -1)
         else:
-            return (-1,0)
-        
-    
+            return (-1,0) 
+   
+    def name():
+        return "Random bee"

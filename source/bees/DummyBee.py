@@ -9,3 +9,6 @@ class DummyBee:
     def behave(self, perception):
         return (0,0)
     
+    def name():
+        return "Dummy Bee"
+    

@@ -7,7 +7,7 @@ import os
 class BeeForm(object):
     """Double buffer in PyGObject with cairo"""
 
-    def __init__(self):
+    def __init__(self):        
         # Build GUI
         self.builder = Gtk.Builder()
         self.glade_file = 'glade/main.glade'
@@ -16,26 +16,57 @@ class BeeForm(object):
         # Get objects
         go = self.builder.get_object
         self.window = go('window')
-
+        self.logbuffer = go('logbuffer')
+        
         # Create buffer
         self.double_buffer = None
 
         # Connect signals
         self.builder.connect_signals(self)
 
+
+        self.log = ''
+        self.beeclasses = self.getBeeClasses()
+
         # Everything is ready
         self.window.show()
 
+    def logupdate(self, text):
+        text += "\n\n"
+        self.logbuffer.insert(
+            self.logbuffer.get_end_iter(),
+            text, length=len(text))
+
+    def exception2str(self, e):
+        s =  "Traceback (most recent call only):\n"
+        s += "  File \"" + e.filename + ", line " + str(e.lineno) + "\n"
+        s += e.text + " "*(e.offset-1) + "^" + "\n"
+        s += e.__class__.__name__ + ": " + e.msg
+        return s
     
-    def getBeeTypes():
+    def getBeeClasses(self):
         """Reads the /bees/ folder and imports the bees within"""
+
         names = list(map(lambda x: splitext(x)[0],
                          os.listdir("bees")))
-        path.append("bees")
-        
-        modules = list(map(__import__, names))
 
-        return modules
+        if '__pycache__' in names:
+            names.remove('__pycache__')
+
+        path.append("bees")
+
+        modules = []
+        
+        for name in names:
+            try:
+                modules.append(__import__(name))
+            except Exception as e:
+                self.logupdate(self.exception2str(e))
+            
+        classes = list(map(lambda z: getattr(z[0],z[1]),
+                           zip(modules, names)))
+
+        return classes
         
 
     def draw_something(self):
@@ -86,7 +117,7 @@ class BeeForm(object):
 
         return False
 
-    def on_configure(self, widget, event, data=None):
+    def on_configure_draw_area(self, widget, event, data=None):
         """Configure the double buffer based on size of the widget"""
 
         # Destroy previous buffer
@@ -103,6 +134,12 @@ class BeeForm(object):
 
         # Initialize the buffer
         self.draw_something()
+
+        return False
+
+    def on_configure_bee_selector(self, widget, event, data=None):
+        """Configure the double buffer based on size of the widget"""
+
 
         return False
 
