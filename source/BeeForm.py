@@ -1,14 +1,16 @@
 import cairo
 from gi.repository import Gtk
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, splitext
+from sys import path
+import os
 
-class GUI(object):
+class BeeForm(object):
     """Double buffer in PyGObject with cairo"""
 
     def __init__(self):
         # Build GUI
         self.builder = Gtk.Builder()
-        self.glade_file = join('glade/main.glade')
+        self.glade_file = 'glade/main.glade'
         self.builder.add_from_file(self.glade_file)
 
         # Get objects
@@ -23,6 +25,18 @@ class GUI(object):
 
         # Everything is ready
         self.window.show()
+
+    
+    def getBeeTypes():
+        """Reads the /bees/ folder and imports the bees within"""
+        names = list(map(lambda x: splitext(x)[0],
+                         os.listdir("bees")))
+        path.append("bees")
+        
+        modules = list(map(__import__, names))
+
+        return modules
+        
 
     def draw_something(self):
         """Draw something into the buffer"""
@@ -93,5 +107,5 @@ class GUI(object):
         return False
 
 if __name__ == '__main__':
-    gui = GUI()
+    gui = BeeForm()
     Gtk.main()

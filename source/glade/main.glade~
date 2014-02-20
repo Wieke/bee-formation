@@ -99,6 +99,7 @@
               <object class="GtkGrid" id="Random Grid">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="column_homogeneous">True</property>
                 <child>
                   <object class="GtkLabel" id="label0">
                     <property name="visible">True</property>
@@ -378,6 +379,18 @@
               </packing>
             </child>
             <child>
+              <object class="GtkLabel" id="Time Progress">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">1 / 10</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">12</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkButton" id="Save Button">
                 <property name="label">gtk-save</property>
                 <property name="visible">True</property>
@@ -390,7 +403,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">12</property>
+                <property name="position">13</property>
               </packing>
             </child>
           </object>
