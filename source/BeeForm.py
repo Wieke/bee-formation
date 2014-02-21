@@ -17,6 +17,8 @@ class BeeForm(object):
         go = self.builder.get_object
         self.window = go('window')
         self.logbuffer = go('logbuffer')
+        self.beetypelist = Gtk.ListStore(str)
+        self.beeselector = go('Bee Selector')
         
         # Create buffer
         self.double_buffer = None
@@ -24,15 +26,24 @@ class BeeForm(object):
         # Connect signals
         self.builder.connect_signals(self)
 
-
+        #Set up things
         self.log = ''
         self.beeclasses = self.getBeeClasses()
+        self.selectedbeeclass = None
 
+        for bee in self.beeclasses:
+            self.beetypelist.append([bee.name()])
+
+        self.beeselector.set_model(self.beetypelist)
+        renderer_text = Gtk.CellRendererText()
+        self.beeselector.pack_start(renderer_text, True)
+        self.beeselector.add_attribute(renderer_text, "text", 0)
+        
         # Everything is ready
         self.window.show()
 
-    def logupdate(self, text):
-        text += "\n\n"
+    def logline(self, text):
+        text += "\n"
         self.logbuffer.insert(
             self.logbuffer.get_end_iter(),
             text, length=len(text))
@@ -48,10 +59,8 @@ class BeeForm(object):
         """Reads the /bees/ folder and imports the bees within"""
 
         names = list(map(lambda x: splitext(x)[0],
-                         os.listdir("bees")))
-
-        if '__pycache__' in names:
-            names.remove('__pycache__')
+                         [ file for file in os.listdir("bees")
+                           if file.endswith(".py")]))
 
         path.append("bees")
 
@@ -60,8 +69,9 @@ class BeeForm(object):
         for name in names:
             try:
                 modules.append(__import__(name))
+                self.logline("Loaded " + name + ".py")
             except Exception as e:
-                self.logupdate(self.exception2str(e))
+                self.logline("\n" + self.exception2str(e) + "\n")
             
         classes = list(map(lambda z: getattr(z[0],z[1]),
                            zip(modules, names)))
@@ -117,6 +127,7 @@ class BeeForm(object):
 
         return False
 
+    """CONFIGURATION FUNCTIONS FOR GUI"""
     def on_configure_draw_area(self, widget, event, data=None):
         """Configure the double buffer based on size of the widget"""
 
@@ -142,6 +153,18 @@ class BeeForm(object):
 
 
         return False
+
+    def on_bee_type_selected(self, combo):
+        tree_iter = combo.get_active_iter()
+        if tree_iter != None:
+            model = combo.get_model()
+            entry = model[tree_iter][0]
+            
+            for bee in self.beeclasses:
+                if entry == bee.name():
+                    self.selectedbeeclass = bee
+                    
+            self.logline("Selected %s." % self.selectedbeeclass.name())
 
 if __name__ == '__main__':
     gui = BeeForm()

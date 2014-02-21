@@ -38,6 +38,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="editable">False</property>
+                <property name="wrap_mode">word</property>
                 <property name="cursor_visible">False</property>
                 <property name="buffer">logbuffer</property>
               </object>
@@ -74,7 +75,6 @@
               <object class="GtkComboBox" id="Bee Selector">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <signal name="configure-event" handler="on_configure_bee_selector" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -120,7 +120,7 @@
                   <object class="GtkLabel" id="label4">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">X Range</property>
+                    <property name="label" translatable="yes">Width</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -157,7 +157,7 @@
                   <object class="GtkLabel" id="label5">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Y Range</property>
+                    <property name="label" translatable="yes">Height</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
