@@ -21,6 +21,7 @@ class BeeForm(object):
         self.beetypelist = Gtk.ListStore(str)
         self.beeselector = go('beeselector')
         self.argumentstore = go('argumentstore')
+        self.argumentlist = go('argumentlist')
 
         #import code
         #code.InteractiveConsole(locals=locals()).interact()
@@ -30,7 +31,7 @@ class BeeForm(object):
         self.guisignals = GUISignals(self, self.world)
         self.builder.connect_signals(self.guisignals)
 
-        #Set up things
+        #Set up Bee Selector
         self.log = ''
         self.beeclasses = self.loadbees()
         self.selectedbeeclass = None
@@ -42,6 +43,23 @@ class BeeForm(object):
         renderer_text = Gtk.CellRendererText()
         self.beeselector.pack_start(renderer_text, True)
         self.beeselector.add_attribute(renderer_text, "text", 0)
+
+        #Set up Argument List
+        column0 = Gtk.TreeViewColumn("Argument")
+        column1 = Gtk.TreeViewColumn("Value")
+        
+        argument = Gtk.CellRendererText()
+        value = Gtk.CellRendererText()
+        value.props.editable = True
+        value.connect("edited", self.guisignals.argument_edited)
+    
+        column0.pack_start(argument, True)
+
+        column0.add_attribute(argument, "text", 0)
+        column1.add_attribute(value, "text", 1)
+
+        self.argumentlist.append_column(column0)
+        self.argumentlist.append_column(column1)
         
         # Everything is ready
         self.window.show()

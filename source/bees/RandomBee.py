@@ -10,7 +10,7 @@ class RandomBee:
         return True
 
     def arguments():
-        return {"seed" : "int"}
+        return {"seed" : int}
 
     def behave(self, perception):
         r = self.generator.random()
