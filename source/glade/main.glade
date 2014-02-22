@@ -2,7 +2,24 @@
 <!-- Generated with glade 3.16.1 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
-  <object class="GtkListStore" id="argumenttree"/>
+  <object class="GtkListStore" id="argumentstore">
+    <columns>
+      <!-- column-name gchararray1 -->
+      <column type="gchararray"/>
+      <!-- column-name gchararray2 -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Test</col>
+        <col id="1" translatable="yes">Test</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Test2</col>
+        <col id="1" translatable="yes">Test2</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkTextBuffer" id="logbuffer"/>
   <object class="GtkWindow" id="mainwindow">
     <property name="can_focus">False</property>
@@ -21,13 +38,21 @@
             <property name="orientation">vertical</property>
             <property name="spacing">6</property>
             <child>
-              <object class="GtkTextView" id="Output Text">
+              <object class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="editable">False</property>
-                <property name="wrap_mode">word</property>
-                <property name="cursor_visible">False</property>
-                <property name="buffer">logbuffer</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkTextView" id="Output Text">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="editable">False</property>
+                    <property name="wrap_mode">word</property>
+                    <property name="cursor_visible">False</property>
+                    <property name="buffer">logbuffer</property>
+                    <property name="overwrite">True</property>
+                  </object>
+                </child>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -71,10 +96,10 @@
               </packing>
             </child>
             <child>
-              <object class="GtkTreeView" id="argumentlis">
+              <object class="GtkTreeView" id="argumentlist">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="model">argumenttree</property>
+                <property name="model">argumentstore</property>
                 <property name="fixed_height_mode">True</property>
                 <property name="enable_grid_lines">horizontal</property>
                 <child internal-child="selection">
@@ -82,7 +107,7 @@
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
+                <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">4</property>
               </packing>

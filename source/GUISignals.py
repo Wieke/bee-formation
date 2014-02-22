@@ -1,8 +1,5 @@
 import cairo
 from gi.repository import Gtk
-from os.path import abspath, dirname, join, splitext
-from sys import path
-import os
 
 class GUISignals(object):
 

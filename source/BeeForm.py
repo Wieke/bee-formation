@@ -1,4 +1,3 @@
-import cairo
 from gi.repository import Gtk
 from os.path import abspath, dirname, join, splitext
 from sys import path
@@ -21,7 +20,11 @@ class BeeForm(object):
         self.logbuffer = go('logbuffer')
         self.beetypelist = Gtk.ListStore(str)
         self.beeselector = go('beeselector')
+        self.argumentstore = go('argumentstore')
 
+        #import code
+        #code.InteractiveConsole(locals=locals()).interact()
+        
         # Connect signals
         self.world = World(self)
         self.guisignals = GUISignals(self, self.world)
@@ -78,7 +81,6 @@ class BeeForm(object):
                            zip(modules, names)))
 
         return classes
-
 
 
 if __name__ == '__main__':
