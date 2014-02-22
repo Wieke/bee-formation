@@ -6,8 +6,9 @@ import os
 
 class GUISignals(object):
 
-    def __init__(self, main):
+    def __init__(self, main, world):
         self.main = main
+        self.world = world
 
     def on_mainwindow_destroy(self, widget):
         """Quit Gtk"""
@@ -16,8 +17,8 @@ class GUISignals(object):
     def on_world_draw(self, widget, cr):
         """Throw double buffer into widget drawable"""
 
-        if self.main.double_buffer is not None:
-            cr.set_source_surface(self.main.double_buffer, 0.0, 0.0)
+        if self.world.double_buffer is not None:
+            cr.set_source_surface(self.world.double_buffer, 0.0, 0.0)
             cr.paint()
         else:
             print('Invalid double buffer')
@@ -29,19 +30,19 @@ class GUISignals(object):
         """Configure the double buffer based on size of the widget"""
 
         # Destroy previous buffer
-        if self.main.double_buffer is not None:
-            self.main.double_buffer.finish()
-            self.main.double_buffer = None
+        if self.world.double_buffer is not None:
+            self.world.double_buffer.finish()
+            self.world.double_buffer = None
 
         # Create a new buffer
-        self.main.double_buffer = cairo.ImageSurface(\
+        self.world.double_buffer = cairo.ImageSurface(\
                 cairo.FORMAT_ARGB32,
                 widget.get_allocated_width(),
                 widget.get_allocated_height()
             )
 
         # Initialize the buffer
-        self.main.draw_something()
+        self.world.draw_something()
 
         return False
 
