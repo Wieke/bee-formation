@@ -8,7 +8,10 @@ from World import World
 class BeeForm(object):
     """Double buffer in PyGObject with cairo"""
 
-    def __init__(self):        
+    def __init__(self):
+        self.beearguments = None
+        self.argumenttypes = None
+        
         # Build GUI
         self.builder = Gtk.Builder()
         self.glade_file = 'glade/main.glade'
@@ -22,9 +25,6 @@ class BeeForm(object):
         self.beeselector = go('beeselector')
         self.argumentstore = go('argumentstore')
         self.argumentlist = go('argumentlist')
-
-        #import code
-        #code.InteractiveConsole(locals=locals()).interact()
         
         # Connect signals
         self.world = World(self)
@@ -54,6 +54,7 @@ class BeeForm(object):
         value.connect("edited", self.guisignals.argument_edited)
     
         column0.pack_start(argument, True)
+        column1.pack_start(value, True)
 
         column0.add_attribute(argument, "text", 0)
         column1.add_attribute(value, "text", 1)

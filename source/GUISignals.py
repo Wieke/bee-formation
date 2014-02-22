@@ -54,4 +54,46 @@ class GUISignals(object):
                     self.main.selectedbeeclass = bee
                     
             self.main.logline("Selected %s." % self.main.selectedbeeclass.name())
-    
+
+        self.main.beearguments = self.main.selectedbeeclass.arguments()
+        self.main.argumentstore.clear()
+        self.main.argumenttypes = []
+        
+        if self.main.beearguments != None:
+            for key, value in self.main.beearguments.items():
+                self.main.argumentstore.append([key + " (" + value.__name__ + ")"
+                                                , ""])
+                self.main.argumenttypes.append(value)
+                self.main.beearguments[key] = None
+                
+        
+
+    def argument_edited(self, widget, path, text):
+        key = self.main.argumentstore[path][0][:-1*len(" (" +
+                    self.main.argumenttypes[int(path)].__name__ + ")")]
+        t = self.main.argumenttypes[int(path)]
+        
+        try:        
+            if t == str:
+                self.main.beearguments[key] = text
+                self.main.argumentstore[path][1] = text
+            elif t == int:
+                self.main.beearguments[key] = int(text)
+                self.main.argumentstore[path][1] = text
+            elif t == float:
+                self.main.beearguments[key] = float(text)
+                self.main.argumentstore[path][1] = text
+            elif t == bool:
+                if text == "0" or text == "1":
+                    self.main.beearguments[key] = bool(text)
+                    self.main.argumentstore[path][1] = text
+                else:
+                    self.main.logline("\nBoolean values should be entered as either 0 or 1.\n")
+
+            
+        except ValueError as e:
+            self.main.logline("\n" + e.args[0] + "\n")
+
+        print(self.main.beearguments)
+
+        

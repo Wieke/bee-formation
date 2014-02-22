@@ -5,9 +5,6 @@ class RandomBee:
     def __init__(self, args):
         self.awake = True
         self.generator = Random(args["seed"])
-    
-    def hasArguments():
-        return True
 
     def arguments():
         return {"seed" : int}
