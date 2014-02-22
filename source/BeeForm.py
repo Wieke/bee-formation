@@ -3,6 +3,7 @@ from gi.repository import Gtk
 from os.path import abspath, dirname, join, splitext
 from sys import path
 import os
+from GUISignals import GUISignals
 
 class BeeForm(object):
     """Double buffer in PyGObject with cairo"""
@@ -15,20 +16,21 @@ class BeeForm(object):
 
         # Get objects
         go = self.builder.get_object
-        self.window = go('window')
+        self.window = go('mainwindow')
         self.logbuffer = go('logbuffer')
         self.beetypelist = Gtk.ListStore(str)
-        self.beeselector = go('Bee Selector')
+        self.beeselector = go('beeselector')
         
         # Create buffer
         self.double_buffer = None
 
         # Connect signals
-        self.builder.connect_signals(self)
+        self.guisignals = GUISignals(self)
+        self.builder.connect_signals(self.guisignals)
 
         #Set up things
         self.log = ''
-        self.beeclasses = self.getBeeClasses()
+        self.beeclasses = self.loadbees()
         self.selectedbeeclass = None
 
         for bee in self.beeclasses:
@@ -55,7 +57,7 @@ class BeeForm(object):
         s += e.__class__.__name__ + ": " + e.msg
         return s
     
-    def getBeeClasses(self):
+    def loadbees(self):
         """Reads the /bees/ folder and imports the bees within"""
 
         names = list(map(lambda x: splitext(x)[0],
@@ -111,60 +113,6 @@ class BeeForm(object):
 
         else:
             print('Invalid double buffer')
-
-    def main_quit(self, widget):
-        """Quit Gtk"""
-        Gtk.main_quit()
-
-    def on_draw(self, widget, cr):
-        """Throw double buffer into widget drawable"""
-
-        if self.double_buffer is not None:
-            cr.set_source_surface(self.double_buffer, 0.0, 0.0)
-            cr.paint()
-        else:
-            print('Invalid double buffer')
-
-        return False
-
-    """CONFIGURATION FUNCTIONS FOR GUI"""
-    def on_configure_draw_area(self, widget, event, data=None):
-        """Configure the double buffer based on size of the widget"""
-
-        # Destroy previous buffer
-        if self.double_buffer is not None:
-            self.double_buffer.finish()
-            self.double_buffer = None
-
-        # Create a new buffer
-        self.double_buffer = cairo.ImageSurface(\
-                cairo.FORMAT_ARGB32,
-                widget.get_allocated_width(),
-                widget.get_allocated_height()
-            )
-
-        # Initialize the buffer
-        self.draw_something()
-
-        return False
-
-    def on_configure_bee_selector(self, widget, event, data=None):
-        """Configure the double buffer based on size of the widget"""
-
-
-        return False
-
-    def on_bee_type_selected(self, combo):
-        tree_iter = combo.get_active_iter()
-        if tree_iter != None:
-            model = combo.get_model()
-            entry = model[tree_iter][0]
-            
-            for bee in self.beeclasses:
-                if entry == bee.name():
-                    self.selectedbeeclass = bee
-                    
-            self.logline("Selected %s." % self.selectedbeeclass.name())
 
 if __name__ == '__main__':
     gui = BeeForm()

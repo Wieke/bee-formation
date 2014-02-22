@@ -2,27 +2,14 @@
 <!-- Generated with glade 3.16.1 -->
 <interface>
   <requires lib="gtk+" version="3.10"/>
-  <object class="GtkListStore" id="Argument List">
-    <columns>
-      <!-- column-name Argument -->
-      <column type="gchararray"/>
-      <!-- column-name gchararray1 -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes"/>
-        <col id="1" translatable="yes"/>
-      </row>
-    </data>
-  </object>
+  <object class="GtkListStore" id="argumenttree"/>
   <object class="GtkTextBuffer" id="logbuffer"/>
-  <object class="GtkWindow" id="window">
+  <object class="GtkWindow" id="mainwindow">
     <property name="can_focus">False</property>
     <property name="window_position">center-always</property>
     <property name="default_width">1281</property>
     <property name="default_height">800</property>
-    <signal name="destroy" handler="main_quit" swapped="no"/>
+    <signal name="destroy" handler="on_mainwindow_destroy" swapped="no"/>
     <child>
       <object class="GtkBox" id="Top Level Box">
         <property name="visible">True</property>
@@ -72,10 +59,10 @@
               </packing>
             </child>
             <child>
-              <object class="GtkComboBox" id="Bee Selector">
+              <object class="GtkComboBox" id="beeselector">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <signal name="changed" handler="on_bee_type_selected" swapped="no"/>
+                <signal name="changed" handler="on_beeselector_changed" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -84,10 +71,10 @@
               </packing>
             </child>
             <child>
-              <object class="GtkTreeView" id="Argument Lis">
+              <object class="GtkTreeView" id="argumentlis">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="model">Argument List</property>
+                <property name="model">argumenttree</property>
                 <property name="fixed_height_mode">True</property>
                 <property name="enable_grid_lines">horizontal</property>
                 <child internal-child="selection">
@@ -418,13 +405,13 @@
           </packing>
         </child>
         <child>
-          <object class="GtkDrawingArea" id="drawingarea1">
+          <object class="GtkDrawingArea" id="world">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
             <property name="vexpand">True</property>
-            <signal name="configure-event" handler="on_configure_draw_area" swapped="no"/>
-            <signal name="draw" handler="on_draw" swapped="no"/>
+            <signal name="configure-event" handler="on_world_configure_event" swapped="no"/>
+            <signal name="draw" handler="on_world_draw" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
