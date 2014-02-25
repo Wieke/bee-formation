@@ -5,5 +5,5 @@ Simulation of the formation of a pattern by autonomous agents based on [Discrete
 ### Requirements
 
 * Python 3
-* PyGObject
+* PyGObject (or PyGi)
 * PyCairo
