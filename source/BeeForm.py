@@ -4,6 +4,7 @@ from sys import path
 import os
 from GUISignals import GUISignals
 from World import World
+from View import View
 
 class BeeForm(object):
     """Double buffer in PyGObject with cairo"""
@@ -28,7 +29,8 @@ class BeeForm(object):
         
         # Connect signals
         self.world = World(self)
-        self.guisignals = GUISignals(self, self.world)
+        self.view = View(self, self.world)
+        self.guisignals = GUISignals(self, self.view)
         self.builder.connect_signals(self.guisignals)
 
         #Set up Bee Selector
