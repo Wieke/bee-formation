@@ -10,7 +10,7 @@ class RandomBee(BaseBee):
         self.awake = True
         self.generator = Random(args["seed"])
 
-    def arguments(self):
+    def arguments():
         return {"seed" : int}
 
     def move(self, perception):
@@ -27,5 +27,5 @@ class RandomBee(BaseBee):
     def shortRangeCommunicate(self, perception):
         return None
     
-    def name(self):
+    def name():
         return "Random bee"
