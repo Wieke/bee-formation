@@ -39,7 +39,7 @@ class BeeForm(object):
         self.selectedbeeclass = None
 
         for bee in self.beeclasses:
-            self.beetypelist.append([bee.name()])
+            self.beetypelist.append([bee.name(self)])
 
         self.beeselector.set_model(self.beetypelist)
         renderer_text = Gtk.CellRendererText()

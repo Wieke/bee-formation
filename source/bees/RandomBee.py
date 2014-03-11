@@ -1,15 +1,19 @@
-from random import Random
+import sys
+sys.path.append("..")
 
-class RandomBee:
+from random import Random
+from BaseBee import BaseBee
+
+class RandomBee(BaseBee):
 
     def __init__(self, args):
         self.awake = True
         self.generator = Random(args["seed"])
 
-    def arguments():
+    def arguments(self):
         return {"seed" : int}
 
-    def behave(self, perception):
+    def move(self, perception):
         r = self.generator.random()
         if r < 0.25:
             return (0,1)
@@ -18,7 +22,10 @@ class RandomBee:
         elif r < 0.75:
             return (0, -1)
         else:
-            return (-1,0) 
-   
-    def name():
+            return (-1,0)
+
+    def shortRangeCommunicate(self, perception):
+        return None
+    
+    def name(self):
         return "Random bee"
