@@ -4,7 +4,7 @@ class BaseBee:
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def arguments(self):
+    def arguments():
         """Return all the arguments given to the bee."""
         return
 
@@ -19,7 +19,7 @@ class BaseBee:
         return
 
     @abc.abstractmethod
-    def name(self):
+    def name():
         """Return name of the type of bee"""
         return
         
