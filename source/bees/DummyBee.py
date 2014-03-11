@@ -7,7 +7,7 @@ class DummyBee(BaseBee):
     def __init__(self):
         self.awake = True
     
-    def arguments(self):
+    def arguments():
         return None
 
     def move(self, perception):
@@ -16,6 +16,6 @@ class DummyBee(BaseBee):
     def shortRangeCommunicate(self, perception):
         return None
     
-    def name(self):
+    def name():
         return "Dummy Bee"
     
