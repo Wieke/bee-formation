@@ -1,27 +1,36 @@
-import abc
+from random import Random
 
 class BaseBee:
-    __metaclass__ = abc.ABCMeta
+    #Static methods
+    def worldConstraints():
+        """Return the world settings
+             - Occlusion: boolean
+             - Collision: boolean
+             - shortRange: binairy int
+        """
+        raise NotImplementedError("Please Implement this method")
 
-    @abc.abstractmethod
-    def arguments():
-        """Return all the arguments given to the bee."""
-        return
-
-    @abc.abstractmethod
-    def move(self, perception):
-        """Move according to the perception"""
-        return
-
-    @abc.abstractmethod
-    def shortRangeCommunicate(self, perception):
-        """Sent out short range communication message"""
-        return
-
-    @abc.abstractmethod
     def name():
         """Return name of the type of bee"""
-        return
+        raise NotImplementedError("Please Implement this method")
+
+    #Non-static methods
+    def __init__(self, args):
+        """awake = Boolean that indicates if an agents is awake or not"""
+        self.awake = True
+
+        """Transformation matrix to transform the global coordinate system to the local coordiante system"""
+        self.transformation = args["transformation"]
+
+        """Seed for randomness"""
+        self.generator = Random(args["seed"])
+
+        """String that contains debug information""" 
+        self.debugInformation = None    
+
+    def behave(self, perception):
+        """Return (Numpy.Array([xmovement, ymovement]), Dict(shortRangeComm))"""
+        raise NotImplementedError("Please Implement this method")
         
 
         
