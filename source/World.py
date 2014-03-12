@@ -57,6 +57,15 @@ class World(object):
         """ Iterate over every bee
               Execture behave
               Update the worldState
+
+        beeMoves = []
+        shortComs = []
+        #Iteratere over every bee
+        for beeState in wordState:
+            (location, bee, globalMovement, shortRangeCom) = 
+            (beeMove, shortComs) = bee.behave(perception())
+            beeMoves.append(beeMoves)
+            shortComs.append(shortComs)
         """
 
             
