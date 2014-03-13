@@ -12,10 +12,10 @@ class BeeForm(object):
     def __init__(self):
         self.beearguments = None
         self.argumenttypes = None
-        self.amountofbees = None
-        self.widthofworld = None
-        self.heightofworld = None
-        self.worldseed = None
+        self.amountofbees = 10
+        self.widthofworld = 20
+        self.heightofworld = 20
+        self.worldseed = 1
         self.selectedbeeclass = None
         
         # Build GUI

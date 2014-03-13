@@ -20,24 +20,32 @@ class GUISignals(object):
         x = self.parseInt(widget.get_text())
         if x != None:
             self.main.amountofbees = x
+        else:
+            self.main.amountofbees = 10            
 
     def on_XRangeEntry_changed(self, widget):
         """Initialize world"""
         x = self.parseInt(widget.get_text())
         if x != None:
             self.main.widthofworld = x
+        else:
+            self.main.widthofworld = 20
 
     def on_YRangeEntry_changed(self, widget):
         """Initialize world"""
         x = self.parseInt(widget.get_text())
         if x != None:
             self.main.heightofworld = x
+        else:
+            self.main.heightofworld = 20
             
     def on_SeedEntry_changed(self, widget):
         """Initialize world"""
         x = self.parseInt(widget.get_text())
         if x != None:
             self.main.worldseed = x
+        else:
+            self.main.worldseed = 1
             
     def on_world_draw(self, widget, cr):
         """Throw double buffer into widget drawable"""
