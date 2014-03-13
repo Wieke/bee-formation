@@ -10,7 +10,7 @@ class World(object):
         self.beeType = None
         self.numberOfBees = None
         self.contraints = None
-        self.worldstate = None
+        self.worldState = None
 
         #possible counterclockwise rotations 0, 90, 180, 270 gegrees
         self.possibleRotations = {0: np.array([[1,0],[0,1]]), 1:
