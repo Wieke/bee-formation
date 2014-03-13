@@ -7,6 +7,10 @@ class World(object):
 
     def __init__(self, main):
         self.main = main
+        self.beeType = None
+        self.numberOfBees = None
+        self.contraints = None
+        self.worldstate = None
 
         #possible counterclockwise rotations 0, 90, 180, 270 gegrees
         self.possibleRotations = {0: np.array([[1,0],[0,1]]), 1:
@@ -43,7 +47,7 @@ class World(object):
         shortRangeCom = [None] * numberOfBees
 
         #Create the wordstate at t = 0
-        self.wordState = list(zip(beeLocations,ListOfBees,globalMovement,shortRangeCom))
+        self.worldState = list(zip(beeLocations,ListOfBees,globalMovement,shortRangeCom))
           
     def step(self):
         """ A loop needs to execute this function to advance the world one step e.g. by BeeForm."""
