@@ -29,7 +29,8 @@ class World(object):
         generator = random.Random(args["seed"])
         for _ in range(numberOfBees):
             seed = generator.random() #what should I do with this?
-            args = {"seed": seed, "transformation":self.possibleRotations[random.randint(0,3)]}
+            args["seed"] = seed
+            args["transformation"] = self.possibleRotations[random.randint(0,3)]
             listOfBees.append(self.beeType(args))
 
         #assign every bee a random location in the grid
