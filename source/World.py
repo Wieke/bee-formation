@@ -13,7 +13,7 @@ class World(object):
         np.array([[0,-1],[1,0]]),
          2: np.array([[-1,0],[0,-1]]), 3: np.array([[0,1],[-1,0]])}
 
-    def prepare(self, beeType, numberOfBees):
+    def prepare(self, beeType, numberOfBees, seed):
         self.beeType = beeType
         self.numberOfBees = numberOfBees
 
@@ -22,8 +22,9 @@ class World(object):
 
         #create the specified number of bee instances
         listOfBees = []
+        generator = random.Random(seed)
         for _ in range(numberOfBees):
-            seed = 1 #what should I do with this?
+            seed = generator.random() #what should I do with this?
             args = {"seed": seed, "transformation":self.possibleRotations[randint(0,3)]}
             listOfBees.append(self.beeType(args))
 
