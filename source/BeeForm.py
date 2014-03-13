@@ -5,6 +5,7 @@ import os
 from GUISignals import GUISignals
 from World import World
 from View import View
+from gi.repository import GLib
 
 class BeeForm(object):
     """Double buffer in PyGObject with cairo"""
@@ -17,6 +18,7 @@ class BeeForm(object):
         self.heightofworld = 20
         self.worldseed = 1
         self.selectedbeeclass = None
+        self.drawinterval = (1/30) * 1000
         
         # Build GUI
         self.builder = Gtk.Builder()
@@ -31,6 +33,7 @@ class BeeForm(object):
         self.beeselector = go('beeselector')
         self.argumentstore = go('argumentstore')
         self.argumentlist = go('argumentlist')
+        self.drawarea = go("world")
         
         # Connect signals
         self.world = World(self)
@@ -71,6 +74,11 @@ class BeeForm(object):
         
         # Everything is ready
         self.window.show()
+        self.updateDrawingArea()
+
+    def updateDrawingArea(self):
+        self.drawarea.queue_draw()
+        GLib.timeout_add(self.drawinterval, self.updateDrawingArea)
 
     def logline(self, text):
         text += "\n"

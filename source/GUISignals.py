@@ -51,6 +51,7 @@ class GUISignals(object):
         """Throw double buffer into widget drawable"""
 
         if self.view.double_buffer is not None:
+            self.view.update()
             cr.set_source_surface(self.view.double_buffer, 0.0, 0.0)
             cr.paint()
         else:
@@ -75,7 +76,7 @@ class GUISignals(object):
             )
 
         # Initialize the buffer
-        self.view.draw_something()
+        self.view.update()
 
         return False
 
