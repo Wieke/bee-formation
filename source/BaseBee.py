@@ -33,4 +33,6 @@ class BaseBee:
         raise NotImplementedError("Please Implement this method")
         
 
+    def arguments():
+        return {"Seed": int}
         

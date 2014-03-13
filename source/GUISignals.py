@@ -11,6 +11,34 @@ class GUISignals(object):
         """Quit Gtk"""
         Gtk.main_quit()
 
+    def on_InitializeButton_clicked(self, widget):
+        """Initialize world"""
+        self.main.preparetheworld()
+
+    def on_AmountEntry_editing_done(self, widget):
+        """Initialize world"""
+        x = self.parseInt(widget.get_text())
+        if x != None:
+            self.main.amountOfBees = x
+
+    def on_XRangeEntry_changed(self, widget):
+        """Initialize world"""
+        x = self.parseInt(widget.get_text())
+        if x != None:
+            self.main.widthofworld = x
+
+    def on_YRangeEntry_changed(self, widget):
+        """Initialize world"""
+        x = self.parseInt(widget.get_text())
+        if x != None:
+            self.main.heightofworld = x
+            
+    def on_SeedEntry_changed(self, widget):
+        """Initialize world"""
+        x = self.parseInt(widget.get_text())
+        if x != None:
+            self.main.seedofbees = x
+            
     def on_world_draw(self, widget, cr):
         """Throw double buffer into widget drawable"""
 
@@ -72,28 +100,36 @@ class GUISignals(object):
         key = self.main.argumentstore[path][0][:-1*len(" (" +
                     self.main.argumenttypes[int(path)].__name__ + ")")]
         t = self.main.argumenttypes[int(path)]
-        
-        try:        
-            if t == str:
-                self.main.beearguments[key] = text
-                self.main.argumentstore[path][1] = text
-            elif t == int:
-                self.main.beearguments[key] = int(text)
-                self.main.argumentstore[path][1] = text
-            elif t == float:
-                self.main.beearguments[key] = float(text)
-                self.main.argumentstore[path][1] = text
-            elif t == bool:
-                if text == "0" or text == "1":
-                    self.main.beearguments[key] = bool(text)
+
+        if len(text) > 0:
+            try:        
+                if t == str:
+                    self.main.beearguments[key] = text
                     self.main.argumentstore[path][1] = text
-                else:
-                    self.main.logline("\nBoolean values should be entered as either 0 or 1.\n")
+                elif t == int:
+                    self.main.beearguments[key] = int(text)
+                    self.main.argumentstore[path][1] = text
+                elif t == float:
+                    self.main.beearguments[key] = float(text)
+                    self.main.argumentstore[path][1] = text
+                elif t == bool:
+                    if text == "0" or text == "1":
+                        self.main.beearguments[key] = bool(text)
+                        self.main.argumentstore[path][1] = text
+                    else:
+                        self.main.logline("\nBoolean values should be entered as either 0 or 1.\n")
 
-            
-        except ValueError as e:
-            self.main.logline("\n" + e.args[0] + "\n")
+                
+            except ValueError as e:
+                self.main.logline("\n" + e.args[0] + "\n")
 
-        print(self.main.beearguments)
+            print(self.main.beearguments)
 
-        
+    def parseInt(self, text):
+        if len(text) > 0:
+            try:
+                return int(text)
+            except ValueError as e:
+                self.main.logline("\n" + e.args[0] + "\n")
+                return None
+                            
