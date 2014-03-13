@@ -37,7 +37,7 @@ class GUISignals(object):
         """Initialize world"""
         x = self.parseInt(widget.get_text())
         if x != None:
-            self.main.seedofbees = x
+            self.main.worldseed = x
             
     def on_world_draw(self, widget, cr):
         """Throw double buffer into widget drawable"""

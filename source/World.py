@@ -17,7 +17,7 @@ class World(object):
         np.array([[0,-1],[1,0]]),
          2: np.array([[-1,0],[0,-1]]), 3: np.array([[0,1],[-1,0]])}
 
-    def prepare(self, beeType, numberOfBees, width, height, seed):
+    def prepare(self, beeType, numberOfBees, width, height, args, worldseed):
         self.beeType = beeType
         self.numberOfBees = numberOfBees
 
@@ -26,17 +26,18 @@ class World(object):
 
         #create the specified number of bee instances
         listOfBees = []
-        generator = random.Random(seed)
+        generator = random.Random(args["seed"])
         for _ in range(numberOfBees):
             seed = generator.random() #what should I do with this?
-            args = {"seed": seed, "transformation":self.possibleRotations[randint(0,3)]}
+            args = {"seed": seed, "transformation":self.possibleRotations[random.randint(0,3)]}
             listOfBees.append(self.beeType(args))
 
         #assign every bee a random location in the grid
         beeLocations = []
         beePossibleLocations = list(itertools.product(range(1,width),range(1,height)))
+        generator = random.Random(worldseed)
         for _ in range(numberOfBees):
-            location = random.choice(beePossibleLocations)
+            location = generator.choice(beePossibleLocations)
             beePossibleLocations.remove(location)
             beeLocations.append(np.array(location))
 
@@ -47,7 +48,7 @@ class World(object):
         shortRangeCom = [None] * numberOfBees
 
         #Create the wordstate at t = 0
-        self.worldState = list(zip(beeLocations,ListOfBees,globalMovement,shortRangeCom))
+        self.worldState = list(zip(beeLocations,listOfBees,globalMovement,shortRangeCom))
           
     def step(self):
         """ A loop needs to execute this function to advance the world one step e.g. by BeeForm."""

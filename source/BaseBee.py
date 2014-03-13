@@ -34,5 +34,5 @@ class BaseBee:
         
 
     def arguments():
-        return {"Seed": int}
+        return {"seed": int}
         

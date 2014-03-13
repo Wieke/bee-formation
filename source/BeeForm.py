@@ -15,7 +15,7 @@ class BeeForm(object):
         self.amountofbees = None
         self.widthofworld = None
         self.heightofworld = None
-        self.seedofbees = None
+        self.worldseed = None
         self.selectedbeeclass = None
         
         # Build GUI
@@ -114,7 +114,8 @@ class BeeForm(object):
                                self.amountofbees,
                                self.widthofworld,
                                self.heightofworld,
-                               self.seedofbees)
+                               self.beearguments,
+                               self.worldseed)
 
     def checkbeearguments(self):
         if self.selectedbeeclass == None:
@@ -133,7 +134,7 @@ class BeeForm(object):
             self.logline("Height not set.")
             return False
             
-        if self.seedofbees == None:
+        if self.worldseed == None:
             self.logline("Seed of bees not set.")
             return False
 
