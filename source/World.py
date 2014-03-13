@@ -17,7 +17,7 @@ class World(object):
         np.array([[0,-1],[1,0]]),
          2: np.array([[-1,0],[0,-1]]), 3: np.array([[0,1],[-1,0]])}
 
-    def prepare(self, beeType, numberOfBees, seed):
+    def prepare(self, beeType, numberOfBees, width, height, seed):
         self.beeType = beeType
         self.numberOfBees = numberOfBees
 
@@ -34,7 +34,7 @@ class World(object):
 
         #assign every bee a random location in the grid
         beeLocations = []
-        beePossibleLocations = list(itertools.product(range(1,numberOfBees+1),repeat=2))
+        beePossibleLocations = list(itertools.product(range(1,width),range(1,height)))
         for _ in range(numberOfBees):
             location = random.choice(beePossibleLocations)
             beePossibleLocations.remove(location)

@@ -16,6 +16,7 @@ class BeeForm(object):
         self.widthofworld = None
         self.heightofworld = None
         self.seedofbees = None
+        self.selectedbeeclass = None
         
         # Build GUI
         self.builder = Gtk.Builder()
@@ -108,20 +109,39 @@ class BeeForm(object):
         return classes
 
     def preparetheworld(self):
+        if self.checkbeearguments():
+            self.world.prepare(self.selectedbeeclass,
+                               self.amountofbees,
+                               self.widthofworld,
+                               self.heightofworld,
+                               self.seedofbees)
+
+    def checkbeearguments(self):
+        if self.selectedbeeclass == None:
+            self.logline("No bee selected")
+            return False
+    
         if self.amountofbees == None:
             self.logline("Amount of bees not set.")
+            return False
             
         if self.widthofworld == None:
             self.logline("Width not set.")
+            return False
             
         if self.heightofworld == None:
             self.logline("Height not set.")
+            return False
             
         if self.seedofbees == None:
             self.logline("Seed of bees not set.")
+            return False
 
-        if any(map(lambda x: x == None, self.beearguments)):
+        if any(map(lambda x: x == None, self.beearguments.values())):
             self.logline("Not all bee arguments have been set.")
+            return False
+
+        return True
 
 if __name__ == '__main__':
     gui = BeeForm()

@@ -15,11 +15,11 @@ class GUISignals(object):
         """Initialize world"""
         self.main.preparetheworld()
 
-    def on_AmountEntry_editing_done(self, widget):
+    def on_AmountEntry_changed(self, widget):
         """Initialize world"""
         x = self.parseInt(widget.get_text())
         if x != None:
-            self.main.amountOfBees = x
+            self.main.amountofbees = x
 
     def on_XRangeEntry_changed(self, widget):
         """Initialize world"""
@@ -122,8 +122,6 @@ class GUISignals(object):
                 
             except ValueError as e:
                 self.main.logline("\n" + e.args[0] + "\n")
-
-            print(self.main.beearguments)
 
     def parseInt(self, text):
         if len(text) > 0:
