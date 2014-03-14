@@ -1,5 +1,5 @@
 import cairo
-import random
+from random import *
 import itertools
 import numpy as np
 
