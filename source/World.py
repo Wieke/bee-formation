@@ -28,8 +28,7 @@ class World(object):
         listOfBees = []
         generator = random.Random(args["seed"])
         for _ in range(numberOfBees):
-            seed = generator.random() #what should I do with this?
-            args["seed"] = seed
+            args["seed"] = generator.random()
             args["transformation"] = self.possibleRotations[random.randint(0,3)]
             listOfBees.append(self.beeType(args))
 
