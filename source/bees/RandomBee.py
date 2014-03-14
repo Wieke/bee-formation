@@ -12,7 +12,7 @@ class RandomBee(BaseBee):
     def name():
         return "Random bee"
 
-    #Non-static methods
+R    #Non-static methods
     def __init__(self, args):
         BaseBee.__init__(self, args)
         
