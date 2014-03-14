@@ -14,6 +14,9 @@ class BaseBee:
         """Return name of the type of bee"""
         raise NotImplementedError("Please Implement this method")
 
+    def arguments():
+        return {"seed": int}
+
     #Non-static methods
     def __init__(self, args):
         """awake = Boolean that indicates if an agents is awake or not"""
@@ -31,8 +34,4 @@ class BaseBee:
     def behave(self, perception):
         """Return (Numpy.Array([xmovement, ymovement]), Dict(shortRangeComm))"""
         raise NotImplementedError("Please Implement this method")
-        
-
-    def arguments():
-        return {"seed": int}
         
