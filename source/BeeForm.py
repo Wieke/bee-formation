@@ -80,14 +80,7 @@ class BeeForm(object):
 
     def updateDrawingArea(self):
         self.drawarea.queue_draw()
-        timeout_add(self.drawinterval, self.updateDrawingArea)
-
-    def doamove(self):
-        for i in range(0,len(self.world.worldState)):
-            self.world.worldState[i][0][0] = self.world.worldState[i][0][0] + randint(-1,1)
-            self.world.worldState[i][0][1] = self.world.worldState[i][0][1] + randint(-1,1)
-        self.updateDrawingArea()
-        timeout_add_seconds(1, self.doamove)        
+        timeout_add(self.drawinterval, self.updateDrawingArea)  
 
     def logline(self, text):
         text += "\n"
@@ -136,7 +129,7 @@ class BeeForm(object):
             self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
             self.updateDrawingArea()
-            self.doamove()
+            self.runWorld()
 
     def checkbeearguments(self):
         if self.selectedbeeclass == None:
@@ -173,7 +166,7 @@ class BeeForm(object):
             """
             if self.world.currentState == self.world.totalStates:
                 self.world.stepForward()        
-            glib.timeout_add_seconds(self.runworldinterval, self.runWorld)
+            timeout_add_seconds(self.runworldinterval, self.runWorld)
         else:
             self.logline("World is not prepared")
 
