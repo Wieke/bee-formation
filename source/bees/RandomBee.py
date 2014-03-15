@@ -32,5 +32,5 @@ class RandomBee(BaseBee):
                 self.awake = True
                 self.sleepCounter = 0
             else:
-                sleep.sleepCounter -= 1
+                self.sleepCounter -= 1
             return (np.array([0,0]), None)

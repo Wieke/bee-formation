@@ -11,8 +11,9 @@ class World(object):
         self.numberOfBees = None
         self.contraints = None
         self.worldStates = None
-        self.totalStates = 0
-        self.currentState = 0
+        self.totalStates = -1
+        self.currentState = -1
+        self.worldGenerator = None
 
         #Parameters that need to be looked at
         self.sleepRate = 0.1
@@ -26,24 +27,23 @@ class World(object):
     def prepare(self, beeType, numberOfBees, width, height, args, worldseed):
         self.beeType = beeType
         self.numberOfBees = numberOfBees
-
+        self.worldGenerator = Random(worldseed)
+        
         #Set constraints dict("occlusion", "collision", "comrange")
         self.constraints = beeType.worldConstraints()
 
         #create the specified number of bee instances
         listOfBees = []
-        generator = Random(args["seed"])
         for _ in range(numberOfBees):
-            args["seed"] = generator.random()
-            args["transformation"] = self.possibleRotations[generator.randint(0,3)]
+            args["seed"] = Random(args["seed"]).random()
+            args["transformation"] = self.possibleRotations[self.worldGenerator.randint(0,3)]
             listOfBees.append(self.beeType(args))
 
         #assign every bee a random location in the grid
         beeLocations = []
         beePossibleLocations = list(itertools.product(range(1,width),range(1,height)))
-        generator = Random(worldseed)
         for _ in range(numberOfBees):
-            location = generator.choice(beePossibleLocations)
+            location = self.worldGenerator.choice(beePossibleLocations)
             beePossibleLocations.remove(location)
             beeLocations.append(np.array(location))
 
@@ -53,10 +53,10 @@ class World(object):
         #Set every short range communication of every bee to None
         shortRangeCom = [None] * numberOfBees
 
-        #Create the wordstate at t = 0
+        #Create the worldstate at t = 0
         self.worldStates = [list(zip(beeLocations,listOfBees,globalMovement,shortRangeCom))]
-        self.totalStates = 1
-        self.currentState = 1
+        self.totalStates += 1
+        self.currentState += 1
           
     def stepForward(self):
         #If state is not in the present move the current state one step closer to the present
@@ -65,7 +65,7 @@ class World(object):
         #Else generate a new state
         else:
             #Retrieve old state
-            states = list(zip(*self.wordState[currentState]))
+            states = list(zip(*self.worldStates[self.currentState]))
             locations = list(states[0])
             bees = list(states[1])
             shortRangeComs = statesbeeState = list(states[3])
@@ -80,12 +80,12 @@ class World(object):
             for bee in bees:
                 #if a bee is awake there is a probability (self.sleepRate) that it will be forced to sleep. It will sleep for self.sleepLimit time steps
                 if bee.awake:
-                    if generator.randint(1,10) <= int(self.sleepRate*10):
+                    if self.worldGenerator.randint(1,10) <= int(self.sleepRate*10):
                         bee.awake = False
-                        bee.sleepCounter = generator.randint(1,self.sleepLimit)
+                        bee.sleepCounter = self.worldGenerator.randint(1,self.sleepLimit)
 
                 #In any case the bee will execute a behavior (if sleeping => minus 1 on the sleep counter)    
-                (beeMovement, newShortRangeCom) = bee.behave(_perception(locations, shortRangeComs, index, bee.transformation))
+                (beeMovement, newShortRangeCom) = bee.behave(self._perception(locations, shortRangeComs, index, bee.transformation))
                 move = np.dot(np.transpose(bee.transformation), beeMovement)
                 globalMovement.append(move)
                 newLocations.append(locations[index] + move)
@@ -102,19 +102,22 @@ class World(object):
             self.currentState += 1
 
     def stepBackward(self):
-        if self.currentState <= 1:
-            raise IlligalStateException(0, self.totalStates)
+        if self.currentState <= 0:
+            raise IlligalStateException(-1, self.totalStates)
         else:
             self.currentState -= 1
     
     def goToState(self, stateNumber):
-        if stateNumber > self.totalStates or stateNumber <= 0:
+        if stateNumber > self.totalStates or stateNumber < 0:
             raise IlligalStateException(stateNumber, self.totalStates)
         else:
             self.currentState = stateNumber    
 
-    def getworldStates(self):
-        return self.worldStates[self.currentState]
+    def getworldState(self):
+        if self.worldStates is None:
+            return None
+        else:
+            return self.worldStates[self.currentState]
 
     def _perception(self, locations, shortRangeComs, index, transformationMatrix):
         ownLocation = locations[index]
@@ -125,14 +128,14 @@ class World(object):
         if self.constraints["occlusion"]:
             #With occlusion only not blocked agents can be seen
             for otherLoc in otherLocations:
-                if lineofsight(ownLocation, otherLoc, otherLocations):
+                if self.lineofsight(ownLocation, otherLoc, otherLocations):
                     accesLocations.append(np.dot(transformationMatrix,otherLoc))
 
         else:
             #Without occlusion all the other agents can be seen
             accesLocations = map(lambda a: np.dot(transformationMatrix,a) , otherLocations)
 
-        accesShortRangeComs = _accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs) 
+        accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs) 
         
         return (accesLocations, accesShortRangeComs)
 
@@ -146,8 +149,8 @@ class World(object):
         return lambda x: m*x+b
 
     def lineofsight(p1, p2, positions):
-        f1 = linfunc(p1,p2)
-        f2 = linfunc(p2,p1)
+        f1 = self.linfunc(p1,p2)
+        f2 = self.linfunc(p2,p1)
         x1, y1 = p1
         x2, y2 = p2
 
@@ -195,4 +198,4 @@ class IlligalStateException(Exception):
         self.enteredState = enteredState
         self.totalNumberStates = totalNumberStates
     def __str__(self):
-        return "Given state: " + repr(self.enteredStatevalue) + " is illigal. Has to be an integer between 1 and " + repr(totalNumberStates)    
+        return "Given state: " + repr(self.enteredState) + " is illigal. Has to be an integer between 0 and " + repr(self.totalNumberStates)    

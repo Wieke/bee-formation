@@ -84,7 +84,7 @@ class View(object):
         """Draw something into the buffer"""
         db = self.double_buffer
         if db is not None:
-            state = self.world.worldState
+            state = self.world.getworldState()
             
             
             # Create cairo context with double buffer as is DESTINATION

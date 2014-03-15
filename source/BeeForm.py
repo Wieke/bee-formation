@@ -76,9 +76,11 @@ class BeeForm(object):
         
         # Everything is ready
         self.window.show()
+        self.updateDrawingArea()
 
     def updateDrawingArea(self):
         self.drawarea.queue_draw()
+        GLib.timeout_add(self.drawinterval, self.updateDrawingArea)
 
     def doamove(self):
         for i in range(0,len(self.world.worldState)):
@@ -165,7 +167,7 @@ class BeeForm(object):
         return True
 
     def runWorld(self):
-        if self.world.totalStates > 0:
+        if self.world.totalStates >= 0:
             """When a user goes back in the history this should be pauze somehow
                e.g. when states are not equal the user is going back in time.
                Disadvantage the max wait is 'runworldinterval' second(s) to contiue
