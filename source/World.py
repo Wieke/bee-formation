@@ -10,7 +10,7 @@ class World(object):
         self.beeType = None
         self.numberOfBees = None
         self.contraints = None
-        self.worldState = None
+        self.worldStates = None
         self.totalStates = 0
         self.currentState = 0
 
@@ -32,16 +32,16 @@ class World(object):
 
         #create the specified number of bee instances
         listOfBees = []
-        generator = random.Random(args["seed"])
+        generator = Random(args["seed"])
         for _ in range(numberOfBees):
             args["seed"] = generator.random()
-            args["transformation"] = self.possibleRotations[random.randint(0,3)]
+            args["transformation"] = self.possibleRotations[generator.randint(0,3)]
             listOfBees.append(self.beeType(args))
 
         #assign every bee a random location in the grid
         beeLocations = []
         beePossibleLocations = list(itertools.product(range(1,width),range(1,height)))
-        generator = random.Random(worldseed)
+        generator = Random(worldseed)
         for _ in range(numberOfBees):
             location = generator.choice(beePossibleLocations)
             beePossibleLocations.remove(location)
@@ -54,7 +54,7 @@ class World(object):
         shortRangeCom = [None] * numberOfBees
 
         #Create the wordstate at t = 0
-        self.worldState = list(zip(beeLocations,listOfBees,globalMovement,shortRangeCom))
+        self.worldStates = [list(zip(beeLocations,listOfBees,globalMovement,shortRangeCom))]
         self.totalStates = 1
         self.currentState = 1
           
@@ -97,7 +97,7 @@ class World(object):
                 index += 1
 
             #Add the new state to the list of states
-            self.worldState.append(list(zip(newLocations,bees,globalMovement,newShortRangeComs)))       
+            self.worldStates.append(list(zip(newLocations,bees,globalMovement,newShortRangeComs)))       
             self.totalStates += 1
             self.currentState += 1
 
@@ -113,8 +113,8 @@ class World(object):
         else:
             self.currentState = stateNumber    
 
-    def getWorldState(self):
-        return self.worldState[currentState]
+    def getworldStates(self):
+        return self.worldStates[self.currentState]
 
     def _perception(self, locations, shortRangeComs, index, transformationMatrix):
         ownLocation = locations[index]
