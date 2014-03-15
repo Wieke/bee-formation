@@ -80,7 +80,6 @@ class BeeForm(object):
 
     def updateDrawingArea(self):
         self.drawarea.queue_draw()
-        timeout_add(self.drawinterval, self.updateDrawingArea)  
 
     def logline(self, text):
         text += "\n"
@@ -128,6 +127,7 @@ class BeeForm(object):
                                self.worldseed)
             self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
+            self.view.reset()
             self.updateDrawingArea()
             self.runWorld()
 
