@@ -133,9 +133,9 @@ class World(object):
 
         else:
             #Without occlusion all the other agents can be seen
-            accesLocations = map(lambda a: np.dot(transformationMatrix,a) , otherLocations)
+            accesLocations = list(map(lambda a: np.dot(transformationMatrix,a) , otherLocations))
 
-        accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs) 
+        accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs, transformationMatrix) 
         
         return (accesLocations, accesShortRangeComs)
 
@@ -175,21 +175,24 @@ class World(object):
                     return False
         return True
 
-    def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs):
+    def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs, transformationMatrix):
         accesShortRangeComs = []
         if self.constraints["comrange"] == 0:
             for index in [i for i, x in enumerate(otherLocations) if np.array_equal(ownLocation,x)]:
-                accesShortRangeComs.append(othershortRangeComs[index])
+                accesShortRangeComs.append((np.dot(transformationMatrix,otherLocations[index]),othershortRangeComs[index]))
                 
         elif self.constraints["comrange"] == 1:
-            neighboringFields = n.array(list(starmap(lambda a,b: (ownLocation[0]+a, mownLocation[0]+b), product((0,-1,+1), (0,-1,+1)))))
-            neighboringFields = n.split(neighboringFields, len(neighboringFields))
+            neighboringFields = np.array(list(itertools.starmap(lambda a,b: (ownLocation[0]+a, ownLocation[1]+b), itertools.product((0,-1,+1), (0,-1,+1)))))
+            neighboringFields = np.split(neighboringFields, len(neighboringFields))
+            index = []
             for field in neighboringFields:
-                for index in [i for i, x in enumerate(otherLocations) if np.array_equal(field,x)]:
-                    accesShortRangeComs.append(othershortRangeComs[index])
+                index.append([i for i, x in enumerate(otherLocations) if np.array_equal(field.flatten(),x)])
+            index = [item for sublist in index for item in sublist]
+            for i in index:
+                accesShortRangeComs.append((np.dot(transformationMatrix,otherLocations[i]), othershortRangeComs[i]))
         else:
             #No implementation for more that range of 1 (since it supposed to be short range). A more general method should be developed.
-            accesShortRangeComs = othershortRangeComs
+            accesShortRangeComs = list(zip(list(map(lambda x: np.dot(transformationMatrix,x),otherLocations)), othershortRangeComs))
 
         return accesShortRangeComs
         
