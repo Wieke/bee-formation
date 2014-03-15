@@ -63,7 +63,6 @@ class World(object):
             self.currentState += 1
         #Else generate a new state
         else:
-            print("Actually Stepping")
             #Retrieve old state
             states = list(zip(*self.worldStates[self.currentState]))
             locations = list(states[0])
