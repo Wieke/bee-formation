@@ -14,6 +14,10 @@ class World(object):
         self.totalStates = 0
         self.currentState = 0
 
+        #Parameters that need to be looked at
+        self.sleepRate = 0.1
+        self.sleepLimit = 10
+
         #possible counterclockwise rotations 0, 90, 180, 270 gegrees
         self.possibleRotations = {0: np.array([[1,0],[0,1]]), 1:
         np.array([[0,-1],[1,0]]),
@@ -23,7 +27,7 @@ class World(object):
         self.beeType = beeType
         self.numberOfBees = numberOfBees
 
-        #Set constraints dict("occlusion", "occlusion", "comrange")
+        #Set constraints dict("occlusion", "collision", "comrange")
         self.constraints = beeType.worldConstraints()
 
         #create the specified number of bee instances
@@ -74,15 +78,22 @@ class World(object):
             #Let every bee behave
             index=0
             for bee in bees:
-                (beeMovement, newShortRangeCom) = bee.behave(_perception(locations, shortRangeComs, index))
-                globalMovement.append(np.dot(np.transpose(bee.transformation), beeMovement))
-                newShortRangeComs.append(newShortRangeCom)
-                index += 1
+                #if a bee is awake there is a probability (self.sleepRate) that it will be forced to sleep. It will sleep for self.sleepLimit time steps
+                if bee.awake:
+                    if generator.randint(1,10) <= int(self.sleepRate*10):
+                        bee.awake = False
+                        bee.sleepCounter = generator.randint(1,self.sleepLimit)
 
-            #After every bee has made a movement: update the locations
-            index=0    
-            for move in globalMovement:
+                #In any case the bee will execute a behavior (if sleeping => minus 1 on the sleep counter)    
+                (beeMovement, newShortRangeCom) = bee.behave(_perception(locations, shortRangeComs, index))
+                move = np.dot(np.transpose(bee.transformation), beeMovement)
+                globalMovement.append(move)
                 newLocations.append(locations[index] + move)
+                newShortRangeComs.append(newShortRangeCom)
+
+                #When collision is an issue a sequential update is needed. In other words: the current bee needs information of the most up-to-date positions
+                if self.constraints["collision"]:
+                    locations[index] = locations[index] + globalMovement[index]
                 index += 1
 
             #Add the new state to the list of states
