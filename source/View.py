@@ -1,7 +1,8 @@
 import cairo
 from numpy import array
 from numpy import around
-from math import pi
+from numpy.random import randint
+from math import pi, atan
 
 class View(object):
 
@@ -140,8 +141,33 @@ class View(object):
                 cc.restore()
                 cc.set_line_width(line_width)
 
+    def drawmovement(self, cc, positions, movement):
+        line_width, _ = cc.device_to_user(2.0, 0.0)
 
+            
+        for pos,move in zip(positions,movement):
+            x,y = self.f(pos)
+            
+            cc.save()
+            cc.translate(x,y)
+            cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
 
+            cc.rotate(atan(move[1]/move[0]))
+            cc.move_to(0,0)
+            cc.line_to(1,0)
+
+            cc.move_to(1,0)
+            cc.line_to(0.7, 0.13)
+
+            cc.move_to(1,0)
+            cc.line_to(0.7, -0.13)
+
+            cc.restore()
+            cc.set_line_width(line_width)
+            cc.set_source_rgb(0, 0, 0)
+            cc.stroke()
+
+                
     def update(self):
         """Draw something into the buffer"""
         db = self.double_buffer
@@ -178,6 +204,7 @@ class View(object):
                 self.drawbees(cc, positions)
                 
                 #Draw Movement
+                self.drawmovement(cc, positions, movement)
 
                 #Draw Communication
 
