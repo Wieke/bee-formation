@@ -1,7 +1,6 @@
 import cairo
 from numpy import array
 from numpy import around
-from numpy.random import randint
 from math import pi, atan
 
 class View(object):
@@ -147,25 +146,27 @@ class View(object):
             
         for pos,move in zip(positions,movement):
             x,y = self.f(pos)
+
+            if move[0] != 0 and move[1] != 0:
             
-            cc.save()
-            cc.translate(x,y)
-            cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
+                cc.save()
+                cc.translate(x,y)
+                cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
 
-            cc.rotate(atan(move[1]/move[0]))
-            cc.move_to(0,0)
-            cc.line_to(1,0)
+                cc.rotate(atan(move[1]/move[0]))
+                cc.move_to(0,0)
+                cc.line_to(1,0)
 
-            cc.move_to(1,0)
-            cc.line_to(0.7, 0.13)
+                cc.move_to(1,0)
+                cc.line_to(0.7, 0.13)
 
-            cc.move_to(1,0)
-            cc.line_to(0.7, -0.13)
+                cc.move_to(1,0)
+                cc.line_to(0.7, -0.13)
 
-            cc.restore()
-            cc.set_line_width(line_width)
-            cc.set_source_rgb(0, 0, 0)
-            cc.stroke()
+                cc.restore()
+                cc.set_line_width(line_width)
+                cc.set_source_rgb(0, 0, 0)
+                cc.stroke()
 
                 
     def update(self):
