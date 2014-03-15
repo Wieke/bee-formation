@@ -25,11 +25,14 @@ class BaseBee:
         """sleepCounter = the amount of steps that a bee has to sleep"""
         self.sleepCounter = 0
 
+        """Seed for randomness"""
+        self.generator = Random(args["seed"])
+
         """Transformation matrix to transform the global coordinate system to the local coordiante system"""
         self.transformation = args["transformation"]
 
-        """Seed for randomness"""
-        self.generator = Random(args["seed"])
+        """Own coordinates in own system"""
+        self.ownCoordinates = args["owncoordinates"]
 
         """String that contains debug information""" 
         self.debugInformation = None    

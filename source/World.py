@@ -32,13 +32,6 @@ class World(object):
         #Set constraints dict("occlusion", "collision", "comrange")
         self.constraints = beeType.worldConstraints()
 
-        #create the specified number of bee instances
-        listOfBees = []
-        for _ in range(numberOfBees):
-            args["seed"] = Random(args["seed"]).random()
-            args["transformation"] = self.possibleRotations[self.worldGenerator.randint(0,3)]
-            listOfBees.append(self.beeType(args))
-
         #assign every bee a random location in the grid
         beeLocations = []
         beePossibleLocations = list(itertools.product(range(1,width),range(1,height)))
@@ -46,6 +39,14 @@ class World(object):
             location = self.worldGenerator.choice(beePossibleLocations)
             beePossibleLocations.remove(location)
             beeLocations.append(np.array(location))
+
+        #create the specified number of bee instances
+        listOfBees = []
+        for _ in range(numberOfBees):
+            args["seed"] = Random(args["seed"]).random()
+            args["transformation"] = self.possibleRotations[self.worldGenerator.randint(0,3)]
+            args["owncoordinates"] = np.array([0,0])
+            listOfBees.append(self.beeType(args))
 
         #Set the global movement of every bee to zero
         globalMovement = [np.array([0,0])] * numberOfBees
@@ -85,8 +86,8 @@ class World(object):
                         bee.sleepCounter = self.worldGenerator.randint(1,self.sleepLimit)
 
                 #In any case the bee will execute a behavior (if sleeping => minus 1 on the sleep counter)    
-                (beeMovement, newShortRangeCom) = bee.behave(self._perception(locations, shortRangeComs, index, bee.transformation))
-                move = np.dot(np.transpose(bee.transformation), beeMovement)
+                (beeMovement, newShortRangeCom) = bee.behave(self._perception(locations, shortRangeComs, index, bee))
+                move = np.dot(beeMovement, bee.transformation) #From local to global - transformation on the right side
                 globalMovement.append(move)
                 newLocations.append(locations[index] + move)
                 newShortRangeComs.append(newShortRangeCom)
@@ -119,7 +120,7 @@ class World(object):
         else:
             return self.worldStates[self.currentState]
 
-    def _perception(self, locations, shortRangeComs, index, transformationMatrix):
+    def _perception(self, locations, shortRangeComs, index, bee):
         ownLocation = locations[index]
         otherLocations = locations[:index] + locations[(index + 1):]
         othershortRangeComs = shortRangeComs[:index] + shortRangeComs[(index + 1):]
@@ -129,13 +130,17 @@ class World(object):
             #With occlusion only not blocked agents can be seen
             for otherLoc in otherLocations:
                 if self.lineofsight(ownLocation, otherLoc, otherLocations):
-                    accesLocations.append(np.dot(transformationMatrix,otherLoc))
+                    #from global to local:
+                    #1. set the origin to this agent (otherLoc-ownLocation)
+                    #2. rotate by np.dot with the transformation matrix on the left side
+                    #3. correct for local origin + Bee.ownCoordinates
+                    accesLocations.append(np.dot(bee.transformation,(otherLoc-ownLocation))+bee.ownCoordinates)
 
         else:
             #Without occlusion all the other agents can be seen
-            accesLocations = list(map(lambda a: np.dot(transformationMatrix,a) , otherLocations))
+            accesLocations = list(map(lambda a: np.dot(bee.transformation,(a-ownLocation))+bee.ownCoordinates , otherLocations))
 
-        accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs, transformationMatrix) 
+        accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs, bee) 
         
         return (accesLocations, accesShortRangeComs)
 
@@ -175,11 +180,15 @@ class World(object):
                     return False
         return True
 
-    def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs, transformationMatrix):
+    def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs, bee):
         accesShortRangeComs = []
         if self.constraints["comrange"] == 0:
             for index in [i for i, x in enumerate(otherLocations) if np.array_equal(ownLocation,x)]:
-                accesShortRangeComs.append((np.dot(transformationMatrix,otherLocations[index]),othershortRangeComs[index]))
+                    #from global to local:
+                    #1. set the origin to this agent (otherLoc-ownLocation)
+                    #2. rotate by np.dot with the transformation matrix on the left side
+                    #3. correct for local origin + Bee.ownCoordinates
+                accesShortRangeComs.append((np.dot(bee.transformation,(otherLocations[index]-ownLocation))+bee.ownCoordinates, othershortRangeComs[index]))
                 
         elif self.constraints["comrange"] == 1:
             neighboringFields = np.array(list(itertools.starmap(lambda a,b: (ownLocation[0]+a, ownLocation[1]+b), itertools.product((0,-1,+1), (0,-1,+1)))))
@@ -189,10 +198,10 @@ class World(object):
                 index.append([i for i, x in enumerate(otherLocations) if np.array_equal(field.flatten(),x)])
             index = [item for sublist in index for item in sublist]
             for i in index:
-                accesShortRangeComs.append((np.dot(transformationMatrix,otherLocations[i]), othershortRangeComs[i]))
+                accesShortRangeComs.append((np.dot(bee.transformation,(otherLocations[i]-ownLocation))+bee.ownCoordinates, othershortRangeComs[i]))
         else:
             #No implementation for more that range of 1 (since it supposed to be short range). A more general method should be developed.
-            accesShortRangeComs = list(zip(list(map(lambda x: np.dot(transformationMatrix,x),otherLocations)), othershortRangeComs))
+            accesShortRangeComs = list(zip(list(map(lambda x: np.dot(bee.transformation,(x-ownLocation))+bee.ownCoordinates, otherLocations)), othershortRangeComs))
 
         return accesShortRangeComs
         
