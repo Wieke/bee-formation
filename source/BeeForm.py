@@ -77,14 +77,7 @@ class BeeForm(object):
         self.window.show()
 
     def updateDrawingArea(self):
-        self.drawarea.queue_draw()
-
-    def doamove(self):
-        for i in range(0,len(self.world.worldState)):
-            self.world.worldState[i][0][0] = self.world.worldState[i][0][0] + randint(-1,1)
-            self.world.worldState[i][0][1] = self.world.worldState[i][0][1] + randint(-1,1)
-        self.updateDrawingArea()
-        timeout_add_seconds(1, self.doamove)        
+        self.drawarea.queue_draw()        
 
     def logline(self, text):
         text += "\n"
@@ -135,7 +128,6 @@ class BeeForm(object):
             self.view.startworldheight = self.heightofworld
             self.view.reset()
             self.updateDrawingArea()
-            self.doamove()
 
     def checkbeearguments(self):
         if self.selectedbeeclass == None:
