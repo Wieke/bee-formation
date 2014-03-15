@@ -5,8 +5,7 @@ import numpy as np
 
 class World(object):
 
-    def __init__(self, main):
-        self.main = main
+    def __init__(self, beeType, numberOfBees, width, height, args, worldseed):
         self.beeType = None
         self.numberOfBees = None
         self.contraints = None
@@ -23,8 +22,7 @@ class World(object):
         self.possibleRotations = {0: np.array([[1,0],[0,1]]), 1:
         np.array([[0,-1],[1,0]]),
          2: np.array([[-1,0],[0,-1]]), 3: np.array([[0,1],[-1,0]])}
-
-    def prepare(self, beeType, numberOfBees, width, height, args, worldseed):
+        
         self.beeType = beeType
         self.numberOfBees = numberOfBees
         self.worldGenerator = Random(worldseed)
@@ -65,6 +63,7 @@ class World(object):
             self.currentState += 1
         #Else generate a new state
         else:
+            print("Actually Stepping")
             #Retrieve old state
             states = list(zip(*self.worldStates[self.currentState]))
             locations = list(states[0])

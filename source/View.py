@@ -5,9 +5,9 @@ from math import pi, atan
 
 class View(object):
 
-    def __init__(self, main, world):
+    def __init__(self, main):
         self.main = main
-        self.world = world
+        self.world = None
         self.origin = None
         self.worldsize = None
         self.margin = None
@@ -17,7 +17,8 @@ class View(object):
         # Create buffer
         self.double_buffer = None
 
-    def reset(self):
+    def reset(self, world):
+        self.world = world
         self.worldsize = None
         self.margin = None
         self.offset = None
@@ -172,10 +173,7 @@ class View(object):
     def update(self):
         """Draw something into the buffer"""
         db = self.double_buffer
-        if db is not None:
-            state = self.world.getworldState()
-            
-            
+        if db is not None:       
             # Create cairo context with double buffer as is DESTINATION
             cc = cairo.Context(db)
             
@@ -189,27 +187,29 @@ class View(object):
             cc.rectangle(0, 0, 1, 1)
             cc.fill()
             
-            if state is not None:
-                positions, bees, movement, communication = map(list, zip(*state))
-                
-                #Determene frame of reference
-                if self.worldsize is None:
-                    self.initiateframe(positions, movement, width, height)
-                else:
-                    self.updateframe(positions, movement, width, height)
-                
-                #Draw Grid
-                self.drawgrid(cc)
+            if self.world is not None:
+                state = self.world.getworldState()
+                if state is not None:
+                    positions, bees, movement, communication = map(list, zip(*state))
+                    
+                    #Determene frame of reference
+                    if self.worldsize is None:
+                        self.initiateframe(positions, movement, width, height)
+                    else:
+                        self.updateframe(positions, movement, width, height)
+                    
+                    #Draw Grid
+                    self.drawgrid(cc)
 
-                #Draw Bees
-                self.drawbees(cc, positions)
-                
-                #Draw Movement
-                self.drawmovement(cc, positions, movement)
+                    #Draw Bees
+                    self.drawbees(cc, positions)
+                    
+                    #Draw Movement
+                    self.drawmovement(cc, positions, movement)
 
-                #Draw Communication
+                    #Draw Communication
 
-                #Draw Debug Info
+                    #Draw Debug Info
 
             # Flush drawing actions
             db.flush()

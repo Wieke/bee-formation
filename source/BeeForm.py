@@ -19,8 +19,8 @@ class BeeForm(object):
         self.heightofworld = 20
         self.worldseed = 1
         self.selectedbeeclass = None
-        self.drawinterval = (1/30) * 1000
         self.runworldinterval = 1
+        self.running = False
         
         # Build GUI
         self.builder = Gtk.Builder()
@@ -38,8 +38,7 @@ class BeeForm(object):
         self.drawarea = go("world")
         
         # Connect signals
-        self.world = World(self)
-        self.view = View(self, self.world)
+        self.view = View(self)
         self.guisignals = GUISignals(self, self.view)
         self.builder.connect_signals(self.guisignals)
 
@@ -119,7 +118,7 @@ class BeeForm(object):
 
     def preparetheworld(self):
         if self.checkbeearguments():
-            self.world.prepare(self.selectedbeeclass,
+            self.world = World(self.selectedbeeclass,
                                self.amountofbees,
                                self.widthofworld,
                                self.heightofworld,
@@ -127,9 +126,11 @@ class BeeForm(object):
                                self.worldseed)
             self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
-            self.view.reset()
+            self.view.reset(self.world)
             self.updateDrawingArea()
-            self.runWorld()
+            if not self.running:
+                self.runWorld()
+                self.running = True
 
     def checkbeearguments(self):
         if self.selectedbeeclass == None:
@@ -165,7 +166,7 @@ class BeeForm(object):
                Disadvantage the max wait is 'runworldinterval' second(s) to contiue
             """
             if self.world.currentState == self.world.totalStates:
-                self.world.stepForward()        
+                self.world.stepForward()
             timeout_add_seconds(self.runworldinterval, self.runWorld)
         else:
             self.logline("World is not prepared")
