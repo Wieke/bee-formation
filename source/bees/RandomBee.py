@@ -18,12 +18,20 @@ class RandomBee(BaseBee):
         
 
     def behave(self, perception):
-        r = self.generator.random()
-        if r < 0.25:
-            return (np.array([0,1]), None)
-        elif r < 0.50:
-            return (np.array([1,0]), None)
-        elif r < 0.75:
-            return (np.array([0,-1]), None)
+        if self.awake:
+            r = self.generator.random()
+            if r < 0.25:
+                return (np.array([0,1]), None)
+            elif r < 0.50:
+                return (np.array([1,0]), None)
+            elif r < 0.75:
+                return (np.array([0,-1]), None)
+            else:
+                return (np.array([-1,0]), None)
         else:
-            return (np.array([-1,0]), None)
+            if self.sleepCounter <= 0:
+                self.awake = True
+                self.sleepCounter = 0
+            else:
+                sleep.sleepCounter -= 1
+            return (np.array([0,0]), None)
