@@ -173,20 +173,22 @@ class World(object):
         return True
 
     def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs):
+        accesShortRangeComs = []
         if self.constraints["comrange"] == 0:
-            neighborIndex = [i for i, x in enumerate(otherLocations) if np.array_equal(ownLocation,x)]
-            return [othershortRangeComs[i] for i in neighborIndex]
-        else if self.constraints["comrange"] == 1:
-            accesShortRangeComs = []
+            for index in [i for i, x in enumerate(otherLocations) if np.array_equal(ownLocation,x)]:
+                accesShortRangeComs.append(othershortRangeComs[index])
+                
+        elif self.constraints["comrange"] == 1:
             neighboringFields = n.array(list(starmap(lambda a,b: (ownLocation[0]+a, mownLocation[0]+b), product((0,-1,+1), (0,-1,+1)))))
             neighboringFields = n.split(neighboringFields, len(neighboringFields))
             for field in neighboringFields:
                 for index in [i for i, x in enumerate(otherLocations) if np.array_equal(field,x)]:
                     accesShortRangeComs.append(othershortRangeComs[index])
-            return accesShortRangeComs
         else:
             #No implementation for more that range of 1 (since it supposed to be short range). A more general method should be developed.
-            return othershortRangeComs
+            accesShortRangeComs = othershortRangeComs
+
+        return accesShortRangeComs
         
 class IlligalStateException(Exception):
     def __init__(self, enteredState, totalNumberStates):
