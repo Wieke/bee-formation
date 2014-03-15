@@ -85,7 +85,7 @@ class World(object):
                         bee.sleepCounter = generator.randint(1,self.sleepLimit)
 
                 #In any case the bee will execute a behavior (if sleeping => minus 1 on the sleep counter)    
-                (beeMovement, newShortRangeCom) = bee.behave(_perception(locations, shortRangeComs, index))
+                (beeMovement, newShortRangeCom) = bee.behave(_perception(locations, shortRangeComs, index, bee.transformation))
                 move = np.dot(np.transpose(bee.transformation), beeMovement)
                 globalMovement.append(move)
                 newLocations.append(locations[index] + move)
@@ -116,34 +116,77 @@ class World(object):
     def getWorldState(self):
         return self.worldState[currentState]
 
-    def _perception(self, locations, shortRangeComs, index):
+    def _perception(self, locations, shortRangeComs, index, transformationMatrix):
         ownLocation = locations[index]
         otherLocations = locations[:index] + locations[(index + 1):]
         othershortRangeComs = shortRangeComs[:index] + shortRangeComs[(index + 1):]
-        
+
+        accesLocations = []
         if self.constraints["occlusion"]:
             #With occlusion only not blocked agents can be seen
-            accesLocations = [] #_FUNCTIEWIEKE(ownLocation, otherLocations)
+            for otherLoc in otherLocations:
+                if lineofsight(ownLocation, otherLoc, otherLocations):
+                    accesLocations.append(np.dot(transformationMatrix,otherLoc))
+
         else:
             #Without occlusion all the other agents can be seen
-            accesLocations = otherLocations
+            accesLocations = map(lambda a: np.dot(transformationMatrix,a) , otherLocations)
 
         accesShortRangeComs = _accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs) 
         
         return (accesLocations, accesShortRangeComs)
 
+    def linfunc(p1,p2):
+        x1, y1 = p1
+        x2, y2 = p2
+
+        m = (y2 - y1)/(x2 - x1)
+        b = y1 - m*x1
+
+        return lambda x: m*x+b
+
+    def lineofsight(p1, p2, positions):
+        f1 = linfunc(p1,p2)
+        f2 = linfunc(p2,p1)
+        x1, y1 = p1
+        x2, y2 = p2
+
+        for x in range(x1, x2):
+            y = f1(x)
+
+            if any(map(lambda x: x == [x,int(y)], positions)):
+                return False
+
+            if (y - int(y)) != 0:
+                if any(map(lambda x: x== [x, int(y+0.5)], positions)):
+                    return False
+
+        for y in range(y1, y2):
+            x = f2(y)
+
+            if any(map(lambda x: x == [int(x),y], positions)):
+                return False
+
+            if (x - int(x)) != 0:
+                if any(map(lambda x: x== [int(x + 0.5), y], positions)):
+                    return False
+        return True
+
     def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs):
-        accesShortRangeComs = []
         if self.constraints["comrange"] == 0:
             neighborIndex = [i for i, x in enumerate(otherLocations) if np.array_equal(ownLocation,x)]
             return [othershortRangeComs[i] for i in neighborIndex]
-                
-        else:
+        else if self.constraints["comrange"] == 1:
+            accesShortRangeComs = []
             neighboringFields = n.array(list(starmap(lambda a,b: (ownLocation[0]+a, mownLocation[0]+b), product((0,-1,+1), (0,-1,+1)))))
             neighboringFields = n.split(neighboringFields, len(neighboringFields))
-            #NOTFINISHED
-            
-        return shortRangeComs
+            for field in neighboringFields:
+                for index in [i for i, x in enumerate(otherLocations) if np.array_equal(field,x)]:
+                    accesShortRangeComs.append(othershortRangeComs[index])
+            return accesShortRangeComs
+        else:
+            #No implementation for more that range of 1 (since it supposed to be short range). A more general method should be developed.
+            return othershortRangeComs
         
 class IlligalStateException(Exception):
     def __init__(self, enteredState, totalNumberStates):
