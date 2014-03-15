@@ -17,7 +17,14 @@ class DummyBee(BaseBee):
         BaseBee.__init__(self, args)
 
     def behave(self, perception):
-        return (np.array([0,0]), None)
-    
+        if self.awake:
+            return (np.array([0,0]), None)
+        else:
+            if self.sleepCounter <= 0:
+                self.awake = True
+                self.sleepCounter = 0
+            else:
+                sleep.sleepCounter -= 1
+            return (np.array([0,0]), None)
 
     

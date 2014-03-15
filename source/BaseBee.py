@@ -22,6 +22,9 @@ class BaseBee:
         """awake = Boolean that indicates if an agents is awake or not"""
         self.awake = True
 
+        """sleepCounter = the amount of steps that a bee has to sleep"""
+        self.sleepCounter = 0
+
         """Transformation matrix to transform the global coordinate system to the local coordiante system"""
         self.transformation = args["transformation"]
 
