@@ -134,7 +134,8 @@ class BeeForm(object):
                                self.beearguments,
                                self.worldseed)
 
-            self.view.startworldwidth = self.widthofworld
+            #Don't know it this shoud be kept in or not?
+	    self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
             self.updateDrawingArea()
             self.doamove()
