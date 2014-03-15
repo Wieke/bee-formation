@@ -11,6 +11,8 @@ class World(object):
         self.numberOfBees = None
         self.contraints = None
         self.worldState = None
+        self.totalStates = 0
+        self.currentState = 0
 
         #possible counterclockwise rotations 0, 90, 180, 270 gegrees
         self.possibleRotations = {0: np.array([[1,0],[0,1]]), 1:
@@ -49,22 +51,93 @@ class World(object):
 
         #Create the wordstate at t = 0
         self.worldState = list(zip(beeLocations,listOfBees,globalMovement,shortRangeCom))
+        self.totalStates = 1
+        self.currentState = 1
           
-    def step(self):
-        """ A loop needs to execute this function to advance the world one step e.g. by BeeForm."""
+    def stepForward(self):
+        #If state is not in the present move the current state one step closer to the present
+        if self.currentState < self.totalStates:
+            self.currentState += 1
+        #Else generate a new state
+        else:
+            #Retrieve old state
+            states = list(zip(*self.wordState[currentState]))
+            locations = list(states[0])
+            bees = list(states[1])
+            shortRangeComs = statesbeeState = list(states[3])
 
-        """ Iterate over every bee
-              Execture behave
-              Update the worldState
+            #Set elements for new state
+            globalMovement = []
+            newShortRangeComs = []
+            newLocations = []
 
-        beeMoves = []
-        shortComs = []
-        #Iteratere over every bee
-        for beeState in wordState:
-            (location, bee, globalMovement, shortRangeCom) = 
-            (beeMove, shortComs) = bee.behave(perception())
-            beeMoves.append(beeMoves)
-            shortComs.append(shortComs)
-        """
+            #Let every bee behave
+            index=0
+            for bee in bees:
+                (beeMovement, newShortRangeCom) = bee.behave(_perception(locations, shortRangeComs, index))
+                globalMovement.append(np.dot(np.transpose(bee.transformation), beeMovement))
+                newShortRangeComs.append(newShortRangeCom)
+                index += 1
 
-            
+            #After every bee has made a movement: update the locations
+            index=0    
+            for move in globalMovement:
+                newLocations.append(locations[index] + move)
+                index += 1
+
+            #Add the new state to the list of states
+            self.worldState.append(list(zip(newLocations,bees,globalMovement,newShortRangeComs)))       
+            self.totalStates += 1
+            self.currentState += 1
+
+    def stepBackward(self):
+        if self.currentState <= 1:
+            raise IlligalStateException(0, self.totalStates)
+        else:
+            self.currentState -= 1
+    
+    def goToState(self, stateNumber):
+        if stateNumber > self.totalStates or stateNumber <= 0:
+            raise IlligalStateException(stateNumber, self.totalStates)
+        else:
+            self.currentState = stateNumber    
+
+    def getWorldState(self):
+        return self.worldState[currentState]
+
+    def _perception(self, locations, shortRangeComs, index):
+        ownLocation = locations[index]
+        otherLocations = locations[:index] + locations[(index + 1):]
+        othershortRangeComs = shortRangeComs[:index] + shortRangeComs[(index + 1):]
+        
+        if self.constraints["occlusion"]:
+            #With occlusion only not blocked agents can be seen
+            accesLocations = _FUNCTIEWIEKE(ownLocation, otherLocations)
+        else:
+            #Without occlusion all the other agents can be seen
+            accesLocations = otherLocations
+
+        accesShortRangeComs = _accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs) 
+        
+        return (accesLocations, accesShortRangeComs)
+
+    def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs):
+        accesShortRangeComs = []
+        if self.constraints["comrange"] == 0:
+            neighborIndex = [i for i, x in enumerate(otherLocations) if np.array_equal(ownLocation,x)]
+            return [othershortRangeComs[i] for i in neighborIndex]
+                
+        else:
+            neighboringFields = n.array(list(starmap(lambda a,b: (ownLocation[0]+a, mownLocation[0]+b), product((0,-1,+1), (0,-1,+1)))))
+            neighboringFields = n.split(neighboringFields, len(neighboringFields))
+            NOTFINISHED
+            for
+
+        return shortRangeComs
+        
+class IlligalStateException(Exception):
+    def __init__(self, enteredState, totalNumberStates):
+        self.enteredState = enteredState
+        self.totalNumberStates = totalNumberStates
+    def __str__(self):
+        return "Given state: " + repr(self.enteredStatevalue) + " is illigal. Has to be an integer between 1 and " + repr(totalNumberStates)    

@@ -19,6 +19,7 @@ class BeeForm(object):
         self.worldseed = 1
         self.selectedbeeclass = None
         self.drawinterval = (1/30) * 1000
+        self.runworldinterval = 1
         
         # Build GUI
         self.builder = Gtk.Builder()
@@ -153,6 +154,18 @@ class BeeForm(object):
             return False
 
         return True
+
+    def runWorld(self)
+        if self.world.totalStates > 0:
+            """When a user goes back in the history this should be pauze somehow
+               e.g. when states are not equal the user is going back in time.
+               Disadvantage the max wait is 'runworldinterval' second(s) to contiue
+            """
+            if self.world.currentState == self.world.totalStates):
+                self.world.stepForward()        
+            glib.timeout_add_seconds(self.runworldinterval, self.runWorld)
+        else:
+            self.logline("World is not prepared")
 
 if __name__ == '__main__':
     gui = BeeForm()
