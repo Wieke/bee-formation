@@ -133,6 +133,7 @@ class BeeForm(object):
 
             self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
+            self.view.reset()
             self.updateDrawingArea()
             self.doamove()
 
