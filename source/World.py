@@ -173,6 +173,7 @@ class World(object):
         return True
 
     def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs):
+        accesShortRangeComs = []
         if self.constraints["comrange"] == 0:
             for index in [i for i, x in enumerate(otherLocations) if np.array_equal(ownLocation,x)]:
                 accesShortRangeComs.append(othershortRangeComs[index])
@@ -186,6 +187,8 @@ class World(object):
         else:
             #No implementation for more that range of 1 (since it supposed to be short range). A more general method should be developed.
             accesShortRangeComs = othershortRangeComs
+
+        return accesShortRangeComs
         
 class IlligalStateException(Exception):
     def __init__(self, enteredState, totalNumberStates):
