@@ -16,7 +16,6 @@ class RandomBee(BaseBee):
     def __init__(self, args):
         BaseBee.__init__(self, args)
         
-
     def behave(self, perception):
         if self.awake:
             r = self.generator.random()
