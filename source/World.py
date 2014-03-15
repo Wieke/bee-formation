@@ -112,7 +112,7 @@ class World(object):
         
         if self.constraints["occlusion"]:
             #With occlusion only not blocked agents can be seen
-            accesLocations = _FUNCTIEWIEKE(ownLocation, otherLocations)
+            accesLocations = [] #_FUNCTIEWIEKE(ownLocation, otherLocations)
         else:
             #Without occlusion all the other agents can be seen
             accesLocations = otherLocations
@@ -130,9 +130,8 @@ class World(object):
         else:
             neighboringFields = n.array(list(starmap(lambda a,b: (ownLocation[0]+a, mownLocation[0]+b), product((0,-1,+1), (0,-1,+1)))))
             neighboringFields = n.split(neighboringFields, len(neighboringFields))
-            NOTFINISHED
-            for
-
+            #NOTFINISHED
+            
         return shortRangeComs
         
 class IlligalStateException(Exception):
