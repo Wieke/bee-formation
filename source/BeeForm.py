@@ -1,11 +1,12 @@
 from gi.repository import Gtk
 from os.path import abspath, dirname, join, splitext
+from numpy.random import randint
 from sys import path
 import os
 from GUISignals import GUISignals
 from World import World
 from View import View
-from gi.repository import GLib
+from gi.repository.GLib import timeout_add_seconds
 
 class BeeForm(object):
     """Double buffer in PyGObject with cairo"""
@@ -78,6 +79,13 @@ class BeeForm(object):
     def updateDrawingArea(self):
         self.drawarea.queue_draw()
 
+    def doamove(self):
+        for i in range(0,len(self.world.worldState)):
+            self.world.worldState[i][0][0] = self.world.worldState[i][0][0] + randint(-1,1)
+            self.world.worldState[i][0][1] = self.world.worldState[i][0][1] + randint(-1,1)
+        self.updateDrawingArea()
+        timeout_add_seconds(1, self.doamove)        
+
     def logline(self, text):
         text += "\n"
         self.logbuffer.insert(
@@ -126,6 +134,7 @@ class BeeForm(object):
             self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
             self.updateDrawingArea()
+            self.doamove()
 
     def checkbeearguments(self):
         if self.selectedbeeclass == None:

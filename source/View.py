@@ -9,8 +9,6 @@ class View(object):
         self.main = main
         self.world = world
         self.origin = None
-        self.startworldwidth = None
-        self.startworldheight = None
 
         # Create buffer
         self.double_buffer = None
@@ -21,18 +19,23 @@ class View(object):
 
         centerofmass = around(sum(positions)/len(positions))
 
-        worldwidth = max(self.startworldwidth,self.startworldheight)
-        worldheight = worldwidth
+        #worldwidth = max(self.main.widthofworld,self.main.heightofworld)
+        #worldheight = worldwidth
+
+        worldwidth = self.main.widthofworld
+        worldheight = self.main.heightofworld
                          
         canvasratio = width / height
-
+        worldratio = worldwidth / worldheight
+        print("width="+str(width) + " height=" + str(height))
         diffwidth = 0
         diffheight = 0
         
-        if 1 < canvasratio:
+        
+        if worldratio < canvasratio:
             worldwidth = worldheight * canvasratio
             center = around(array([worldwidth - 1, worldheight])/2)
-        elif 1 > canvasratio:
+        elif worldratio > canvasratio:
             worldheight = worldwidth / canvasratio
             center = around(array([worldwidth, worldheight - 1])/2)
 
@@ -109,8 +112,12 @@ class View(object):
 
                 #Draw Bees
                 self.drawbees(cc, positions, f, square)
-                #Draw Movement
                 
+                #Draw Movement
+
+                #Draw Communication
+
+                #Draw Debug Info
 
 
                
