@@ -75,9 +75,11 @@ class BeeForm(object):
         
         # Everything is ready
         self.window.show()
+        self.updateDrawingArea()
 
     def updateDrawingArea(self):
         self.drawarea.queue_draw()
+        GLib.timeout_add(self.drawinterval, self.updateDrawingArea)
 
     def logline(self, text):
         text += "\n"
@@ -124,10 +126,6 @@ class BeeForm(object):
                                self.beearguments,
                                self.worldseed)
 
-            self.view.startworldwidth = self.widthofworld
-            self.view.startworldheight = self.heightofworld
-            self.updateDrawingArea()
-
     def checkbeearguments(self):
         if self.selectedbeeclass == None:
             self.logline("No bee selected")
@@ -156,7 +154,7 @@ class BeeForm(object):
         return True
 
     def runWorld(self):
-        if self.world.totalStates > 0:
+        if self.world.totalStates >= 0:
             """When a user goes back in the history this should be pauze somehow
                e.g. when states are not equal the user is going back in time.
                Disadvantage the max wait is 'runworldinterval' second(s) to contiue
