@@ -6,7 +6,7 @@ import os
 from GUISignals import GUISignals
 from World import World
 from View import View
-from gi.repository.GLib import timeout_add_seconds
+from gi.repository.GLib import timeout_add_seconds, timeout_add
 
 class BeeForm(object):
     """Double buffer in PyGObject with cairo"""
@@ -80,7 +80,7 @@ class BeeForm(object):
 
     def updateDrawingArea(self):
         self.drawarea.queue_draw()
-        GLib.timeout_add(self.drawinterval, self.updateDrawingArea)
+        timeout_add(self.drawinterval, self.updateDrawingArea)
 
     def doamove(self):
         for i in range(0,len(self.world.worldState)):
@@ -133,8 +133,7 @@ class BeeForm(object):
                                self.heightofworld,
                                self.beearguments,
                                self.worldseed)
-
-	    self.view.startworldwidth = self.widthofworld
+            self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
             self.updateDrawingArea()
             self.doamove()

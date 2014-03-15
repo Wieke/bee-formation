@@ -27,7 +27,7 @@ class View(object):
                          
         canvasratio = width / height
         worldratio = worldwidth / worldheight
-        print("width="+str(width) + " height=" + str(height))
+        #print("width="+str(width) + " height=" + str(height))
         diffwidth = 0
         diffheight = 0
         
