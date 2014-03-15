@@ -167,6 +167,7 @@ class BeeForm(object):
             """
             if self.world.currentState == self.world.totalStates:
                 self.world.stepForward()
+                self.updateDrawingArea()
             timeout_add_seconds(self.runworldinterval, self.runWorld)
         else:
             self.logline("World is not prepared")
