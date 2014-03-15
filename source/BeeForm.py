@@ -74,11 +74,9 @@ class BeeForm(object):
         
         # Everything is ready
         self.window.show()
-        self.updateDrawingArea()
 
     def updateDrawingArea(self):
         self.drawarea.queue_draw()
-        GLib.timeout_add(self.drawinterval, self.updateDrawingArea)
 
     def logline(self, text):
         text += "\n"
@@ -124,6 +122,10 @@ class BeeForm(object):
                                self.heightofworld,
                                self.beearguments,
                                self.worldseed)
+
+            self.view.startworldwidth = self.widthofworld
+            self.view.startworldheight = self.heightofworld
+            self.updateDrawingArea()
 
     def checkbeearguments(self):
         if self.selectedbeeclass == None:
