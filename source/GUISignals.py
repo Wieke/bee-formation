@@ -7,6 +7,9 @@ class GUISignals(object):
         self.main = main
         self.view = view
 
+    def on_reloadbees_clicked(self, widget):
+        self.main.reloadbees()
+
     def on_drawarea_button_press(self, widget, event):
         self.view.clickEvent(event.x/widget.get_allocated_width(),
                              event.y/widget.get_allocated_height())
@@ -97,16 +100,42 @@ class GUISignals(object):
                     
             self.main.logline("Selected %s." % self.main.selectedbeeclass.name())
 
-        self.main.beearguments = self.main.selectedbeeclass.arguments()
-        self.main.argumentstore.clear()
-        self.main.argumenttypes = []
-        
-        if self.main.beearguments != None:
-            for key, value in self.main.beearguments.items():
-                self.main.argumentstore.append([key + " (" + value.__name__ + ")"
-                                                , ""])
-                self.main.argumenttypes.append(value)
-                self.main.beearguments[key] = None
+        if self.main.selectedbeeclass is not None:
+            args = self.main.selectedbeeclass.arguments()
+            
+            if self.main.beearguments is not None:
+                new = self.main.selectedbeeclass.arguments()
+                for k in new.keys():
+                    if k in self.main.beearguments:
+                        oldvalue = self.main.beearguments[k]
+
+                        if type(oldvalue) == args[k]:
+                            new[k] = oldvalue
+                        else:
+                            new[k] = None
+                    else:
+                        new[k] = None
+                self.main.beearguments = new
+            else:
+                self.main.beearguments = self.main.selectedbeeclass.arguments()
+                for k in self.main.beearguments.keys():
+                    self.main.beearguments[k] = None
+
+
+            self.main.argumentstore.clear()
+            self.main.argumenttypes = []
+            
+            if self.main.beearguments != None:
+                for key, value in self.main.beearguments.items():
+                    if value is None:
+                        t = ""
+                    else:
+                        t = str(value)
+                        
+                    self.main.argumentstore.append([key + " (" + args[key].__name__ + ")"
+                                                    , t])
+                    self.main.argumenttypes.append(args[key])
+                    self.main.beearguments[key] = value
                 
         
 

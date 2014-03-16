@@ -21,6 +21,7 @@ class BeeForm(object):
         self.selectedbeeclass = None
         self.runworldinterval = 1
         self.running = False
+        self.selectedbeeclass = None
         
         # Build GUI
         self.builder = Gtk.Builder()
@@ -50,7 +51,6 @@ class BeeForm(object):
         #Set up Bee Selector
         self.log = ''
         self.beeclasses = self.loadbees()
-        self.selectedbeeclass = None
 
         for bee in self.beeclasses:
             self.beetypelist.append([bee.name()])
@@ -97,6 +97,23 @@ class BeeForm(object):
         s += e.text + " "*(e.offset-1) + "^" + "\n"
         s += e.__class__.__name__ + ": " + e.msg
         return s
+
+    def reloadbees(self):
+        self.beeclasses = self.loadbees()
+        
+        self.beetypelist.clear()
+
+        for bee in self.beeclasses:
+            self.beetypelist.append([bee.name()])
+
+        if self.selectedbeeclass is not None:
+            self.selectedbeeclass = next(x for x in self.beeclasses
+                            if x.name() == self.selectedbeeclass.name())
+
+            self.beeselector.set_active(
+                [x.name() for x in self.beeclasses].index(
+                    self.selectedbeeclass.name()))           
+        
     
     def loadbees(self):
         """Reads the /bees/ folder and imports the bees within"""
