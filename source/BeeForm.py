@@ -110,6 +110,8 @@ class BeeForm(object):
                 self.logline("Loaded " + name + ".py")
             except Exception as e:
                 self.logline("\n" + self.exception2str(e) + "\n")
+                names.remove(name)
+                
             
         classes = list(map(lambda z: getattr(z[0],z[1]),
                            zip(modules, names)))
