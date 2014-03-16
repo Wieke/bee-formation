@@ -7,7 +7,7 @@ import numpy as np
 class RandomBee(BaseBee):
     #Static methods
     def worldConstraints():
-        return {"occlusion":False, "collision":False, "comrange":0}
+        return {"occlusion":True, "collision":False, "comrange":0}
     
     def name():
         return "Random bee"

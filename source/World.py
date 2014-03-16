@@ -34,7 +34,7 @@ class World(object):
 
         #assign every bee a random location in the grid
         beeLocations = []
-        beePossibleLocations = list(itertools.product(range(1,width),range(1,height)))
+        beePossibleLocations = list(itertools.product(range(0,width),range(0,height)))
         for _ in range(numberOfBees):
             location = self.worldGenerator.choice(beePossibleLocations)
             beePossibleLocations.remove(location)
@@ -76,6 +76,7 @@ class World(object):
             newShortRangeComs = []
             newLocations = []
 
+            self.temp=[] #remove this
             #Let every bee behave
             index=0
             for bee in bees:
@@ -101,6 +102,7 @@ class World(object):
             self.worldStates.append(list(zip(newLocations,bees,globalMovement,newShortRangeComs)))       
             self.totalStates += 1
             self.currentState += 1
+            print(self.temp)
 
     def stepBackward(self):
         if self.currentState <= 0:
@@ -124,17 +126,19 @@ class World(object):
         ownLocation = locations[index]
         otherLocations = locations[:index] + locations[(index + 1):]
         othershortRangeComs = shortRangeComs[:index] + shortRangeComs[(index + 1):]
-
         accesLocations = []
         if self.constraints["occlusion"]:
             #With occlusion only not blocked agents can be seen
+            counter = 0
             for otherLoc in otherLocations:
-                if self.lineofsight(ownLocation, otherLoc, otherLocations):
+                if self._lineofsight(ownLocation, otherLoc, otherLocations):
                     #from global to local:
                     #1. set the origin to this agent (otherLoc-ownLocation)
                     #2. rotate by np.dot with the transformation matrix on the left side
                     #3. correct for local origin + Bee.ownCoordinates
                     accesLocations.append(np.dot(bee.transformation,(otherLoc-ownLocation))+bee.ownCoordinates)
+                    counter += 1
+            self.temp.append(counter)
 
         else:
             #Without occlusion all the other agents can be seen
@@ -144,22 +148,28 @@ class World(object):
         
         return (accesLocations, accesShortRangeComs)
 
-    def linfunc(p1,p2):
+    def _linfunc(self, p1,p2):
         x1, y1 = p1
         x2, y2 = p2
-
-        m = (y2 - y1)/(x2 - x1)
+        if (x2-x1) == 0:
+            m = 1
+        else:
+            m = (y2 - y1)/(x2 - x1)
         b = y1 - m*x1
 
         return lambda x: m*x+b
 
-    def lineofsight(p1, p2, positions):
-        f1 = self.linfunc(p1,p2)
-        f2 = self.linfunc(p2,p1)
-        x1, y1 = p1
-        x2, y2 = p2
+    def _lineofsight(self, p1, p2, positions):        
+        xs = sorted([p1[0], p2[0]])
+        ys = sorted([p1[1], p2[1]])
+        f1 = self._linfunc(p1,p2)
+        f2 = self._linfunc(p2,p1)
 
-        for x in range(x1, x2):
+        if xs[1] - xs[0] == ys[1] - ys[0]:
+            #p1 and p2 are equal so they can see each other
+            return True
+                    
+        for x in range(xs[0], xs[1]):
             y = f1(x)
 
             if any(map(lambda x: x == [x,int(y)], positions)):
@@ -168,8 +178,8 @@ class World(object):
             if (y - int(y)) != 0:
                 if any(map(lambda x: x== [x, int(y+0.5)], positions)):
                     return False
-
-        for y in range(y1, y2):
+                        
+        for y in range(ys[0], ys[0]):
             x = f2(y)
 
             if any(map(lambda x: x == [int(x),y], positions)):
@@ -178,8 +188,9 @@ class World(object):
             if (x - int(x)) != 0:
                 if any(map(lambda x: x== [int(x + 0.5), y], positions)):
                     return False
-        return True
-
+                
+            return True
+        
     def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs, bee):
         accesShortRangeComs = []
         if self.constraints["comrange"] == 0:
