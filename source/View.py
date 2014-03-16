@@ -1,6 +1,8 @@
 import cairo
-from numpy import array, array_equal, around 
+from numpy import array, array_equal, around
+from World import lineofsight
 from math import pi, atan
+from itertools import product as iterprod
 
 class View(object):
 
@@ -34,6 +36,7 @@ class View(object):
         self.worldsize = None
         self.margin = None
         self.offset = None
+        self.selectedbee = None
 
     def initiateframe(self, state, width, height):
 
@@ -187,23 +190,49 @@ class View(object):
     def drawselection(self,cc,state):
         if self.selectedbee is not None:
             pos = next((x[0] for x in state if x[1] is self.selectedbee), None)
-            if pos is not None:
-                line_width, _ = cc.device_to_user(1.0, 0.0)
-                x,y = self.f(pos)
-                
-                cc.save()
-                cc.translate(x,y)
-                cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
+            
+            line_width, _ = cc.device_to_user(1.0, 0.0)
+            x,y = self.f(pos)
+            
+            cc.save()
+            cc.translate(x,y)
+            cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
 
-                cc.move_to(-0.5,-0.5)
-                cc.line_to(0.5,0.5)
-                cc.move_to(-0.5,0.5)
-                cc.line_to(0.5, -0.5)
-                
-                cc.restore()
-                cc.set_line_width(line_width)
-                cc.set_source_rgb(0, 0, 0)
-                cc.stroke()
+            cc.move_to(-0.5,-0.5)
+            cc.line_to(0.5,0.5)
+            cc.move_to(-0.5,0.5)
+            cc.line_to(0.5, -0.5)
+            
+            cc.restore()
+            cc.set_line_width(line_width)
+            cc.set_source_rgb(0, 0, 0)
+            cc.stroke()
+
+    def drawocclusionshading(self, cc, state):
+        if self.selectedbee is not None:
+            pos = next((x[0] for x in state if x[1] is self.selectedbee), None)
+            positions, bees, movement, communication = map(list, zip(*state))
+
+            xmin,ymin = self.fi(array([0,0]))
+            xmax,ymax = self.fi(array([1,1]))
+
+            for square in iterprod(range(int(xmin)-2,int(xmax)+2),
+                                        range(int(ymin)-2,int(ymax)+2)):
+                square = array(square)
+
+                if not lineofsight(pos, square, positions):
+                    x,y = self.f(square)
+                    
+                    cc.save()
+                    cc.translate(x,y)
+                    cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
+
+                    cc.rectangle(-0.5,-0.5,1,1)
+                    
+                    cc.restore()
+                    cc.set_source_rgb(0.9, 0.9, 0.9)
+                    cc.fill()
+        
 
                 
     def update(self):
@@ -236,6 +265,10 @@ class View(object):
                     else:
                         self.updateframe(state, width, height)
                     
+                    #Draw occlusion shading
+                    if self.world.constraints["occlusion"] or True:
+                        self.drawocclusionshading(cc,state)
+                    
                     #Draw Grid
                     self.drawgrid(cc)
 
@@ -247,6 +280,8 @@ class View(object):
 
                     #Draw selection
                     self.drawselection(cc, state)
+
+
 
                     #Draw Communication
 

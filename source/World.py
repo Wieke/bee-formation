@@ -127,7 +127,7 @@ class World(object):
         if self.constraints["occlusion"]:
             #With occlusion only not blocked agents can be seen
             for otherLoc in otherLocations:
-                if self.lineofsight(ownLocation, otherLoc, otherLocations):
+                if lineofsight(ownLocation, otherLoc, otherLocations):
                     #from global to local:
                     #1. set the origin to this agent (otherLoc-ownLocation)
                     #2. rotate by np.dot with the transformation matrix on the left side
@@ -141,42 +141,6 @@ class World(object):
         accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs, bee) 
         
         return (accesLocations, accesShortRangeComs)
-
-    def linfunc(p1,p2):
-        x1, y1 = p1
-        x2, y2 = p2
-
-        m = (y2 - y1)/(x2 - x1)
-        b = y1 - m*x1
-
-        return lambda x: m*x+b
-
-    def lineofsight(p1, p2, positions):
-        f1 = self.linfunc(p1,p2)
-        f2 = self.linfunc(p2,p1)
-        x1, y1 = p1
-        x2, y2 = p2
-
-        for x in range(x1, x2):
-            y = f1(x)
-
-            if any(map(lambda x: x == [x,int(y)], positions)):
-                return False
-
-            if (y - int(y)) != 0:
-                if any(map(lambda x: x== [x, int(y+0.5)], positions)):
-                    return False
-
-        for y in range(y1, y2):
-            x = f2(y)
-
-            if any(map(lambda x: x == [int(x),y], positions)):
-                return False
-
-            if (x - int(x)) != 0:
-                if any(map(lambda x: x== [int(x + 0.5), y], positions)):
-                    return False
-        return True
 
     def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs, bee):
         accesShortRangeComs = []
@@ -208,4 +172,53 @@ class IlligalStateException(Exception):
         self.enteredState = enteredState
         self.totalNumberStates = totalNumberStates
     def __str__(self):
-        return "Given state: " + repr(self.enteredState) + " is illigal. Has to be an integer between 0 and " + repr(self.totalNumberStates)    
+        return "Given state: " + repr(self.enteredState) + " is illigal. Has to be an integer between 0 and " + repr(self.totalNumberStates)
+
+
+def linfunc(p1,p2):
+    x1, y1 = p1
+    x2, y2 = p2
+
+    m = (y2 - y1)/(x2 - x1)
+
+    b = y1 - m*x1
+
+    return lambda x: m*x+b
+
+def linfuncinv(p1,p2):
+    y1, x1 = p1
+    y2, x2 = p2
+
+    m = (y2 - y1)/(x2 - x1)
+
+    b = y1 - m*x1
+
+    return lambda x: m*x+b
+
+def lineofsight(p1, p2, positions):
+    if np.array_equal(p1,p2):
+        return True
+    
+    x1, y1 = p1
+    x2, y2 = p2
+
+    if abs(x1-x2) > abs(y1-y2):
+        f = linfunc(p1,p2)
+        for x in range(min(x1,x2)+1, max(x1,x2)):
+            pl = np.array([x, int(f(x))])
+            pu = np.array([x, int(f(x)+0.5)])
+            if any(map(lambda x: np.array_equal(x,pu), positions)):
+                return False
+            if any(map(lambda x: np.array_equal(x,pl), positions)):
+                return False
+    else:
+        f = linfuncinv(p2,p1)
+        for y in range(min(y1,y2)+1, max(y1,y2)):
+            pl = np.array([int(f(y)),y])
+            pu = np.array([int(f(y)+0.5),y])             
+            if any(map(lambda x: np.array_equal(x,pu), positions)):
+                return False
+            if any(map(lambda x: np.array_equal(x,pl), positions)):
+                return False
+    
+    return True   
