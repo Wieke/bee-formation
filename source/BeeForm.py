@@ -107,19 +107,15 @@ class BeeForm(object):
 
         path.append("bees")
 
-        modules = []
+        classes = []
         
         for name in names:
             try:
-                modules.append(__import__(name))
+                classes.append(getattr(__import__(name),name))
                 self.logline("Loaded " + name + ".py")
             except Exception as e:
-                self.logline("\n" + self.exception2str(e) + "\n")
-                names.remove(name)
-                
-            
-        classes = list(map(lambda z: getattr(z[0],z[1]),
-                           zip(modules, names)))
+                self.logline("\nFailed to load " + name + ".py")
+                self.logline(self.exception2str(e) + "\n")                
 
         return classes
 
