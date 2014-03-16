@@ -1,6 +1,5 @@
 import cairo
-from numpy import array
-from numpy import around
+from numpy import array, array_equal, around 
 from math import pi, atan
 
 class View(object):
@@ -15,6 +14,7 @@ class View(object):
         self.prevwindowsize = None
         self.f = None
         self.fi = None
+        self.selectedbee = None
 
         # Create buffer
         self.double_buffer = None
@@ -23,8 +23,11 @@ class View(object):
         if self.fi is not None:
             pos = around(self.fi(array([x,y])))
             
-            print(post)
-
+            if self.world is not None:
+                state = self.world.getworldState()
+                if state is not None:
+                    self.selectedbee = next((x[1] for x in state if array_equal(x[0],pos)), None)
+                    
 
     def reset(self, world):
         self.world = world
@@ -32,7 +35,9 @@ class View(object):
         self.margin = None
         self.offset = None
 
-    def initiateframe(self, positions, movement, width, height):
+    def initiateframe(self, state, width, height):
+
+        positions, bees, movement, communication = map(list, zip(*state))
 
         positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
 
@@ -60,7 +65,9 @@ class View(object):
         self.f  = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
         self.fi = lambda x: x*self.worldsize - 0.5 - self.offset - self.margin
 
-    def updateframe(self, positions, movement, width, height):
+    def updateframe(self, state, width, height):
+            positions, bees, movement, communication = map(list, zip(*state))
+            
             positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
             
             x = [x for [x,y] in map(self.f, positions)]
@@ -112,12 +119,12 @@ class View(object):
             cc.set_source_rgb(0, 0, 0)
             cc.stroke()
 
-    def drawbees(self, cc, bees):
+    def drawbees(self, cc, state):
         line_width, _ = cc.device_to_user(1.0, 0.0)
 
         todraw = dict()
         
-        for pos in bees:
+        for pos,_,_,_ in state:
             key = (pos[0],pos[1])
             if key in todraw:
                 todraw[key] = (todraw[key][0],todraw[key][1]+1)
@@ -149,11 +156,11 @@ class View(object):
                 cc.restore()
                 cc.set_line_width(line_width)
 
-    def drawmovement(self, cc, positions, movement):
+    def drawmovement(self, cc, state):
         line_width, _ = cc.device_to_user(2.0, 0.0)
 
             
-        for pos,move in zip(positions,movement):
+        for pos,_ , move, _ in state:
             x,y = self.f(pos)
 
             if move[0] != 0 and move[1] != 0:
@@ -172,6 +179,27 @@ class View(object):
                 cc.move_to(1,0)
                 cc.line_to(0.7, -0.13)
 
+                cc.restore()
+                cc.set_line_width(line_width)
+                cc.set_source_rgb(0, 0, 0)
+                cc.stroke()
+
+    def drawselection(self,cc,state):
+        if self.selectedbee is not None:
+            pos = next((x[0] for x in state if x[1] is self.selectedbee), None)
+            if pos is not None:
+                line_width, _ = cc.device_to_user(1.0, 0.0)
+                x,y = self.f(pos)
+                
+                cc.save()
+                cc.translate(x,y)
+                cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
+
+                cc.move_to(-0.5,-0.5)
+                cc.line_to(0.5,0.5)
+                cc.move_to(-0.5,0.5)
+                cc.line_to(0.5, -0.5)
+                
                 cc.restore()
                 cc.set_line_width(line_width)
                 cc.set_source_rgb(0, 0, 0)
@@ -198,25 +226,27 @@ class View(object):
             if self.world is not None:
                 state = self.world.getworldState()
                 if state is not None:
-                    positions, bees, movement, communication = map(list, zip(*state))
                     
                     #Determene frame of reference
                     if self.prevwindowsize is None:
                         self.prevwindowsize = (width,height)
                     
                     if self.worldsize is None or self.prevwindowsize != (width,height):
-                        self.initiateframe(positions, movement, width, height)
+                        self.initiateframe(state, width, height)
                     else:
-                        self.updateframe(positions, movement, width, height)
+                        self.updateframe(state, width, height)
                     
                     #Draw Grid
                     self.drawgrid(cc)
 
                     #Draw Bees
-                    self.drawbees(cc, positions)
+                    self.drawbees(cc, state)
                     
                     #Draw Movement
-                    self.drawmovement(cc, positions, movement)
+                    self.drawmovement(cc, state)
+
+                    #Draw selection
+                    self.drawselection(cc, state)
 
                     #Draw Communication
 

@@ -2,7 +2,7 @@ from gi.repository import Gtk, Gdk
 from os.path import abspath, dirname, join, splitext
 from numpy.random import randint
 from sys import path
-import os
+from os import listdir
 from GUISignals import GUISignals
 from World import World
 from View import View
@@ -102,7 +102,7 @@ class BeeForm(object):
         """Reads the /bees/ folder and imports the bees within"""
 
         names = list(map(lambda x: splitext(x)[0],
-                         [ file for file in os.listdir("bees")
+                         [ file for file in listdir("bees")
                            if file.endswith(".py")]))
 
         path.append("bees")

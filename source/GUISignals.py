@@ -10,6 +10,7 @@ class GUISignals(object):
     def on_drawarea_button_press(self, widget, event):
         self.view.clickEvent(event.x/widget.get_allocated_width(),
                              event.y/widget.get_allocated_height())
+        self.main.updateDrawingArea()
 
     def on_mainwindow_destroy(self, widget):
         """Quit Gtk"""
