@@ -32,7 +32,7 @@ class World(object):
 
         #assign every bee a random location in the grid
         beeLocations = []
-        beePossibleLocations = list(itertools.product(range(1,width),range(1,height)))
+        beePossibleLocations = list(itertools.product(range(0,width),range(0,height)))
         for _ in range(numberOfBees):
             location = self.worldGenerator.choice(beePossibleLocations)
             beePossibleLocations.remove(location)
@@ -74,6 +74,7 @@ class World(object):
             newShortRangeComs = []
             newLocations = []
 
+            self.temp=[] #remove this
             #Let every bee behave
             index=0
             for bee in bees:
@@ -99,6 +100,7 @@ class World(object):
             self.worldStates.append(list(zip(newLocations,bees,globalMovement,newShortRangeComs)))       
             self.totalStates += 1
             self.currentState += 1
+            print(self.temp)
 
     def stepBackward(self):
         if self.currentState <= 0:
@@ -122,10 +124,10 @@ class World(object):
         ownLocation = locations[index]
         otherLocations = locations[:index] + locations[(index + 1):]
         othershortRangeComs = shortRangeComs[:index] + shortRangeComs[(index + 1):]
-
         accesLocations = []
         if self.constraints["occlusion"]:
             #With occlusion only not blocked agents can be seen
+            counter = 0
             for otherLoc in otherLocations:
                 if lineofsight(ownLocation, otherLoc, otherLocations):
                     #from global to local:
@@ -133,6 +135,8 @@ class World(object):
                     #2. rotate by np.dot with the transformation matrix on the left side
                     #3. correct for local origin + Bee.ownCoordinates
                     accesLocations.append(np.dot(bee.transformation,(otherLoc-ownLocation))+bee.ownCoordinates)
+                    counter += 1
+            self.temp.append(counter)
 
         else:
             #Without occlusion all the other agents can be seen
