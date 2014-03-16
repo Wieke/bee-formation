@@ -25,8 +25,6 @@ class View(object):
             
             print(post)
 
-            if self.view is not None:
-                if self.view.get       
 
     def reset(self, world):
         self.world = world
