@@ -266,7 +266,7 @@ class View(object):
                         self.updateframe(state, width, height)
                     
                     #Draw occlusion shading
-                    if self.world.constraints["occlusion"] or True:
+                    if self.world.constraints["occlusion"]:
                         self.drawocclusionshading(cc,state)
                     
                     #Draw Grid
