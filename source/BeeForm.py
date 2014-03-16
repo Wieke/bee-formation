@@ -1,4 +1,4 @@
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 from os.path import abspath, dirname, join, splitext
 from numpy.random import randint
 from sys import path
@@ -36,11 +36,16 @@ class BeeForm(object):
         self.argumentstore = go('argumentstore')
         self.argumentlist = go('argumentlist')
         self.drawarea = go("world")
+
+        #Add EventMask to drawarea
+        self.drawarea.add_events(Gdk.EventMask.BUTTON_PRESS_MASK) 
         
         # Connect signals
         self.view = View(self)
         self.guisignals = GUISignals(self, self.view)
         self.builder.connect_signals(self.guisignals)
+
+        self.drawarea.connect('button-press-event', self.guisignals.on_drawarea_button_press)
 
         #Set up Bee Selector
         self.log = ''
