@@ -32,6 +32,8 @@ class BeeForm(object):
         go = self.builder.get_object
         self.window = go('mainwindow')
         self.logbuffer = go('logbuffer')
+        self.beedebugbuffer = go('beedebugbuffer')
+        self.beecomstore = go('beecommunicationstore')
         self.beetypelist = Gtk.ListStore(str)
         self.beeselector = go('beeselector')
         self.argumentstore = go('argumentstore')

@@ -233,7 +233,19 @@ class View(object):
                     cc.set_source_rgb(0.9, 0.9, 0.9)
                     cc.fill()
         
+    def updatebeedebug(self, state):
+        text = "No bee selected."
+        if self.selectedbee is not None:
+            if self.selectedbee.debugInformation is not None:
+                text = self.selectedbee.debugInformation
+            else:
+                text = "No debug info."
 
+        buf = self.main.beedebugbuffer
+        start, end = buf.get_bounds()
+        buf.delete(start,end)
+        buf.insert(start, text, length=len(text))
+        
                 
     def update(self):
         """Draw something into the buffer"""
@@ -255,6 +267,12 @@ class View(object):
             if self.world is not None:
                 state = self.world.getworldState()
                 if state is not None:
+
+                    #Update Bee Debug
+                    self.updatebeedebug(state)
+
+                    #Update Bee Communication
+                    #self.updatebeecommunication(state)
                     
                     #Determene frame of reference
                     if self.prevwindowsize is None:
@@ -280,9 +298,7 @@ class View(object):
 
                     #Draw selection
                     self.drawselection(cc, state)
-
-
-
+                    
                     #Draw Communication
 
                     #Draw Debug Info
