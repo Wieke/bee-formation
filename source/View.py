@@ -13,9 +13,22 @@ class View(object):
         self.margin = None
         self.offset = None
         self.prevwindowsize = None
+        self.f = None
+        self.fi = None
 
         # Create buffer
         self.double_buffer = None
+
+    def clickEvent(self, x,y):
+        if self.fi is not None:
+            pos = around(self.fi(array([x,y])))
+            
+            print(post)
+
+            if self.view is not None:
+                if self.view.get
+
+            
 
     def reset(self):
         self.worldsize = None
@@ -47,16 +60,14 @@ class View(object):
         
         self.offset = center - centerofmass 
         
-        self.f = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
+        self.f  = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
+        self.fi = lambda x: x*self.worldsize - 0.5 - self.offset - self.margin
 
     def updateframe(self, positions, movement, width, height):
             positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
             
             x = [x for [x,y] in map(self.f, positions)]
             y = [y for [x,y] in map(self.f, positions)]
-
-            #import code
-            #code.interact(local=locals())
             
             if min(x) < 0 or max(x) > 1 or min(y) < 0 or max(y) > 1:
 
@@ -86,6 +97,7 @@ class View(object):
                 self.offset = center - centerofmass 
                 
                 self.f = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
+                self.fi = lambda x: x*self.worldsize - 0.5 - self.offset - self.margin
         
 
     def drawgrid(self, cc):
