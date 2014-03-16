@@ -68,6 +68,7 @@ class World(object):
             newShortRangeComs = []
             globalMovement = []
 
+            self.temp=[] #remove this
             #Let every bee behave
             index=0
             for bee in bees:
@@ -88,6 +89,7 @@ class World(object):
             self.worldStates.append(list(zip(locations,bees,globalMovement,newShortRangeComs)))       
             self.totalStates += 1
             self.currentState += 1
+            print(self.temp)
 
     def stepBackward(self):
         if self.currentState <= 0:
@@ -114,6 +116,7 @@ class World(object):
         accesLocations = []
         if self.constraints["occlusion"]:
             #With occlusion only not blocked agents can be seen
+            counter = 0
             for otherLoc in otherLocations:
                 if lineofsight(ownLocation, otherLoc, otherLocations):
                     #from global to local:
