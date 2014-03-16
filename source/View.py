@@ -193,7 +193,10 @@ class View(object):
                     positions, bees, movement, communication = map(list, zip(*state))
                     
                     #Determene frame of reference
-                    if self.worldsize is None:
+                    if self.prevwindowsize is None:
+                        self.prevwindowsize = (width,height)
+                    
+                    if self.worldsize is None or self.prevwindowsize != (width,height):
                         self.initiateframe(positions, movement, width, height)
                     else:
                         self.updateframe(positions, movement, width, height)
