@@ -114,6 +114,8 @@ class BeeForm(object):
                 [x.name() for x in self.beeclasses].index(
                     self.selectedbeeclass.name()))           
         
+        if self.running:
+            self.preparetheworld()
     
     def loadbees(self):
         """Reads the /bees/ folder and imports the bees within"""
@@ -142,7 +144,7 @@ class BeeForm(object):
                                self.amountofbees,
                                self.widthofworld,
                                self.heightofworld,
-                               self.beearguments,
+                               self.beearguments.copy(),
                                self.worldseed)
             self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
