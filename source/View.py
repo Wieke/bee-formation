@@ -152,8 +152,6 @@ class View(object):
                                        (func(amax,1) - func(amin,1))/2 + func(amin,1)]))
             
             self.offset = center - centerbees
-
-            print(self.offset)
             
             self.margin = (self.worldsize - around(self.worldsize - 0.5))/2
             
@@ -263,7 +261,6 @@ class View(object):
     def drawselection(self,cc,state):
         if self.selectedbee is not None:
             pos = next((x[0] for x in state if x[1] is self.selectedbee), None)
-            print(self.f(pos))
             line_width, _ = cc.device_to_user(1.0, 0.0)
             x,y = self.f(pos)
             

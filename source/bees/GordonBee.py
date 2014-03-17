@@ -18,15 +18,16 @@ class GordonBee(BaseBee):
     #Non-static methods
     def __init__(self, args):
         BaseBee.__init__(self, args)
+        self.flag = False
         
     def behave(self, perception):
+        move = array([0,0])
         if self.awake:
             r = self.generator.random()
             bees, communication = perception
             
             centerofmass = around(sum(bees)/len(bees))
 
-            output = {"flag":False}
             move = array([0,0])
 
             if centerofmass[0] > 0:
@@ -38,14 +39,13 @@ class GordonBee(BaseBee):
             elif centerofmass[1] < 0:
                 move = array([0,-1])
             elif all(map(lambda x: array_equal(array([0,0]),x),bees)):
-                output = {"flag":True}
-                
-            return (move, output)
-            
+                self.flag = True
+                            
         else:
             if self.sleepCounter <= 0:
                 self.awake = True
                 self.sleepCounter = 0
             else:
                 self.sleepCounter -= 1
-            return (array([0,0]), None)
+
+        return (move, {"flag":self.flag})
