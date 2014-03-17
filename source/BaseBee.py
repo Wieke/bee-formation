@@ -17,6 +17,10 @@ class BaseBee:
     def arguments():
         return {"seed": int}
 
+    def comkeys():
+        """Returns a list of all possible communication keys"""
+        return None
+    
     #Non-static methods
     def __init__(self, args):
         """awake = Boolean that indicates if an agents is awake or not"""

@@ -318,24 +318,6 @@ class View(object):
         start, end = buf.get_bounds()
         buf.delete(start,end)
         buf.insert(start, text, length=len(text))
-
-    def setupcomlist(self):
-        column0 = Gtk.TreeViewColumn("Argument")
-        column1 = Gtk.TreeViewColumn("Value")
-        
-        argument = Gtk.CellRendererText()
-        value = Gtk.CellRendererText()
-        value.props.editable = True
-        value.connect("edited", self.guisignals.argument_edited)
-    
-        column0.pack_start(argument, True)
-        column1.pack_start(value, True)
-
-        column0.add_attribute(argument, "text", 0)
-        column1.add_attribute(value, "text", 1)
-
-        self.argumentlist.append_column(column0)
-        self.argumentlist.append_column(column1)
                 
     def update(self):
         """Draw something into the buffer"""

@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 
 from BaseBee import BaseBee
-from numpy import array, array_equal
+from numpy import array, array_equal, around
 
 class GordonBee(BaseBee):
     #Static methods
@@ -24,7 +24,7 @@ class GordonBee(BaseBee):
             r = self.generator.random()
             bees, communication = perception
             
-            centerofmass = np.around(sum(bees)/len(bees))
+            centerofmass = around(sum(bees)/len(bees))
 
             output = {"flag":False}
             move = array([0,0])
@@ -48,4 +48,4 @@ class GordonBee(BaseBee):
                 self.sleepCounter = 0
             else:
                 self.sleepCounter -= 1
-            return (np.array([0,0]), None)
+            return (array([0,0]), None)

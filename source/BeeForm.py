@@ -39,6 +39,8 @@ class BeeForm(object):
         self.beeselector = go('beeselector')
         self.argumentstore = go('argumentstore')
         self.argumentlist = go('argumentlist')
+        self.comstore = None
+        self.comlist = go('communicationlist')
         self.drawarea = go("world")
 
         #Add EventMask to drawarea
@@ -80,6 +82,8 @@ class BeeForm(object):
 
         self.argumentlist.append_column(column0)
         self.argumentlist.append_column(column1)
+
+        self.setupcomlist()
         
         # Everything is ready
         self.window.show()
@@ -163,10 +167,56 @@ class BeeForm(object):
             self.view.startworldheight = self.heightofworld
             self.view.reset(self.world)
             self.updateDrawingArea()
-            #self.view.setupcomlist()
+            self.setupcomlist()
             if not self.running:
                 self.runWorld()
                 self.running = True
+
+    def setupcomlist(self):
+        position = 0
+
+        if self.comlist.get_n_columns() > 0:
+            for i in reversed(range(0,self.comlist.get_n_columns())):
+                self.comlist.remove_column(
+                    self.comlist.get_column(i))
+
+        columns = ["Position","Awake"]
+
+        if self.selectedbeeclass is not None:
+            if self.selectedbeeclass.comkeys() is not None:
+                columns = columns + self.selectedbeeclass.comkeys()
+
+            
+        for c in columns:
+            column = Gtk.TreeViewColumn(c)
+            cell = Gtk.CellRendererText()
+            column.pack_start(cell, True)
+
+            column.add_attribute(cell, "text", position)
+            position += 1
+
+            self.comlist.append_column(column)
+
+        self.comstore = Gtk.ListStore(*[str]*position)
+        self.comlist.set_model(self.comstore)
+
+    def updateComlist(self):
+        self.comstore.clear()
+        for position, bee, move, com in self.world.getworldState():
+            entry = list()
+            entry.append(str(position[0]) + "," + str(position[1]))
+            entry.append(str(bee.awake))
+            for c in bee.__class__.comkeys():
+                if com is not None:
+                    if c in com:
+                        entry.append(str(com[c]))
+                    else:
+                        entry.append("None")
+                else:
+                    entry.append("None")
+
+            self.comstore.append(entry)
+            
 
     def checkbeearguments(self):
         if self.selectedbeeclass == None:
@@ -207,6 +257,7 @@ class BeeForm(object):
             if self.world.currentState == self.world.totalStates:
                 self.world.stepForward()
                 self.updateDrawingArea()
+                self.updateComlist()
             timeout_add_seconds(self.runworldinterval, self.runWorld)
         else:
             self.logline("World is not prepared")
