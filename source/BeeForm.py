@@ -152,6 +152,7 @@ class BeeForm(object):
             self.view.startworldheight = self.heightofworld
             self.view.reset(self.world)
             self.updateDrawingArea()
+            #self.view.setupcomlist()
             if not self.running:
                 self.runWorld()
                 self.running = True

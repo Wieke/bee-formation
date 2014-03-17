@@ -37,14 +37,13 @@ class View(object):
         self.margin = None
         self.offset = None
         self.selectedbee = None
+        self.f = None
+        self.fi = None
 
-    def initiateframe(self, state, width, height):
-
-        positions, bees, movement, communication = map(list, zip(*state))
-
-        positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
-
-        centerofmass = around(sum(positions)/len(positions))
+    def initiateframe(self, state):
+        
+        width = self.double_buffer.get_width()
+        height = self.double_buffer.get_height()
 
         worldwidth = self.main.widthofworld
         worldheight = self.main.heightofworld
@@ -58,18 +57,25 @@ class View(object):
         elif worldratio > canvasratio:
             worldheight = worldwidth / canvasratio
             center = around(array([worldwidth, worldheight - 1])/2)
-
         self.worldsize = array([worldwidth,worldheight])
 
         self.margin = (self.worldsize - around(self.worldsize - 0.5))/2
-        
-        self.offset = center - centerofmass 
-        
-        self.f  = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
-        self.fi = lambda x: x*self.worldsize - 0.5 - self.offset - self.margin
 
-    def updateframe(self, state, width, height):
+        if state is not None:
             positions, bees, movement, communication = map(list, zip(*state))
+            positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
+            centerofmass = around(sum(positions)/len(positions))
+            
+            self.offset = center - centerofmass 
+            
+            self.f  = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
+            self.fi = lambda x: x*self.worldsize - 0.5 - self.offset - self.margin
+
+    def updateframe(self, state):
+            positions, bees, movement, communication = map(list, zip(*state))
+            
+            width = self.double_buffer.get_width()
+            height = self.double_buffer.get_height()
             
             positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
             
@@ -245,24 +251,46 @@ class View(object):
         start, end = buf.get_bounds()
         buf.delete(start,end)
         buf.insert(start, text, length=len(text))
+
+    def setupcomlist(self):
+        column0 = Gtk.TreeViewColumn("Argument")
+        column1 = Gtk.TreeViewColumn("Value")
         
+        argument = Gtk.CellRendererText()
+        value = Gtk.CellRendererText()
+        value.props.editable = True
+        value.connect("edited", self.guisignals.argument_edited)
+    
+        column0.pack_start(argument, True)
+        column1.pack_start(value, True)
+
+        column0.add_attribute(argument, "text", 0)
+        column1.add_attribute(value, "text", 1)
+
+        self.argumentlist.append_column(column0)
+        self.argumentlist.append_column(column1)
                 
     def update(self):
         """Draw something into the buffer"""
-        db = self.double_buffer
-        if db is not None:       
+        if self.double_buffer is not None:       
             # Create cairo context with double buffer as is DESTINATION
-            cc = cairo.Context(db)
+            cc = cairo.Context(self.double_buffer)
             
             # Scale to device coordenates
-            width = db.get_width()
-            height = db.get_height()
+            width = self.double_buffer.get_width()
+            height = self.double_buffer.get_height()
             cc.scale(width, height)
 
             # Draw a white background
             cc.set_source_rgb(1, 1, 1)
             cc.rectangle(0, 0, 1, 1)
             cc.fill()
+
+            if self.prevwindowsize is None:
+                self.prevwindowsize = (width,height)
+
+            if self.worldsize is None or self.prevwindowsize != (width,height):
+               self.initiateframe(None)
             
             if self.world is not None:
                 state = self.world.getworldState()
@@ -275,13 +303,12 @@ class View(object):
                     #self.updatebeecommunication(state)
                     
                     #Determene frame of reference
-                    if self.prevwindowsize is None:
-                        self.prevwindowsize = (width,height)
+
                     
-                    if self.worldsize is None or self.prevwindowsize != (width,height):
-                        self.initiateframe(state, width, height)
+                    if self.f is None or self.prevwindowsize != (width,height):
+                        self.initiateframe(state)
                     else:
-                        self.updateframe(state, width, height)
+                        self.updateframe(state)
                     
                     #Draw occlusion shading
                     if self.world.constraints["occlusion"]:
@@ -302,9 +329,10 @@ class View(object):
                     #Draw Communication
 
                     #Draw Debug Info
-
+            else:
+                self.drawgrid(cc)
             # Flush drawing actions
-            db.flush()
+            self.double_buffer.flush()
 
         else:
             print('Invalid double buffer')
