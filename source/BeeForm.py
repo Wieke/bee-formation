@@ -14,7 +14,7 @@ class BeeForm(object):
     def __init__(self):
         self.beearguments = None
         self.argumenttypes = None
-        self.amountofbees = 10
+        self.amountofbees = 0
         self.widthofworld = 20
         self.heightofworld = 20
         self.worldseed = 1
@@ -33,6 +33,7 @@ class BeeForm(object):
         self.window = go('mainwindow')
         self.logbuffer = go('logbuffer')
         self.beedebugbuffer = go('beedebugbuffer')
+        self.amountbuffer = go('amountbuffer')
         self.beecomstore = go('beecommunicationstore')
         self.beetypelist = Gtk.ListStore(str)
         self.beeselector = go('beeselector')
@@ -83,6 +84,16 @@ class BeeForm(object):
         # Everything is ready
         self.window.show()
         self.updateDrawingArea()
+
+    def updateamount(self):
+        if self.beearguments is not None:
+            if "formation" in self.beearguments:
+                self.amountofbees = len(self.beearguments["formation"])
+                text = str(self.amountofbees)
+                buf = self.amountbuffer
+                start, end = buf.get_bounds()
+                buf.delete(start,end)
+                buf.insert(start, text, length=len(text))
 
     def updateDrawingArea(self):
         self.drawarea.queue_draw()
@@ -164,6 +175,9 @@ class BeeForm(object):
     
         if self.amountofbees == None:
             self.logline("Amount of bees not set.")
+            return False
+        elif self.amountofbees < 1:
+            self.logline("Please draw a formation of at least a single bee")
             return False
             
         if self.widthofworld == None:

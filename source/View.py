@@ -17,18 +17,32 @@ class View(object):
         self.f = None
         self.fi = None
         self.selectedbee = None
-
+        
         # Create buffer
         self.double_buffer = None
 
     def clickEvent(self, x,y):
         if self.fi is not None:
             pos = around(self.fi(array([x,y])))
-            print(pos)
+            
             if self.world is not None:
                 state = self.world.getworldState()
                 if state is not None:
                     self.selectedbee = next((x[1] for x in state if array_equal(x[0],pos)), None)
+            elif self.main.beearguments is not None:
+                if "formation" in self.main.beearguments:
+                    f = self.main.beearguments["formation"]
+
+                    if not any(map(lambda x: array_equal(pos,x),f)):
+                        f.append(pos)
+                    else:
+                        del f[list((map(lambda x: array_equal(pos,x),f))).index(True)]
+                    
+                else:
+                    self.main.beearguments["formation"] = list()
+                    self.main.beearguments["formation"].append(pos)
+
+                self.main.updateamount()
 
     def reset(self, world):
         self.world = world
@@ -199,6 +213,25 @@ class View(object):
                 cc.restore()
                 cc.set_line_width(line_width)
 
+    def drawformation(self, cc):
+        line_width, _ = cc.device_to_user(1.0, 0.0)
+
+        if self.main.beearguments is not None:
+            if "formation" in self.main.beearguments:                
+                for pos in self.main.beearguments["formation"]:
+                    x,y = self.f(pos)
+                    
+                    cc.save()
+                    cc.translate(x,y)
+                    cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
+                    cc.arc(0,0,0.35,0, 2*pi)
+                    cc.move_to(0,0)
+                    cc.restore()
+                    cc.set_line_width(line_width)
+                    cc.set_source_rgb(0, 0, 0)
+                    cc.stroke()
+
+
     def drawmovement(self, cc, state):
         line_width, _ = cc.device_to_user(2.0, 0.0)
 
@@ -363,6 +396,7 @@ class View(object):
                 #Draw Debug Info
             else:
                 self.drawgrid(cc)
+                self.drawformation(cc)
             # Flush drawing actions
             self.double_buffer.flush()
 
