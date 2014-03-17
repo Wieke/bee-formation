@@ -30,13 +30,13 @@ class GordonBee(BaseBee):
             move = array([0,0])
 
             if centerofmass[0] > 0:
-                move = array([1,0]
+                move = array([1,0])
             elif centerofmass[0] < 0:
-                move = array([-1,0]
+                move = array([-1,0])
             elif centerofmass[1] > 0:
-                move = array([0,1]
+                move = array([0,1])
             elif centerofmass[1] < 0:
-                move = array([0,-1]
+                move = array([0,-1])
             elif all(map(lambda x: array_equal(array([0,0]),x),bees)):
                 output = {"flag":True}
                 
