@@ -1,5 +1,5 @@
 import cairo
-from numpy import array, array_equal, around
+from numpy import array, array_equal, around, amin, amax
 from World import lineofsight
 from math import pi, atan
 from itertools import product as iterprod
@@ -24,12 +24,11 @@ class View(object):
     def clickEvent(self, x,y):
         if self.fi is not None:
             pos = around(self.fi(array([x,y])))
-            
+            print(pos)
             if self.world is not None:
                 state = self.world.getworldState()
                 if state is not None:
                     self.selectedbee = next((x[1] for x in state if array_equal(x[0],pos)), None)
-                    
 
     def reset(self, world):
         self.world = world
@@ -45,8 +44,26 @@ class View(object):
         width = self.double_buffer.get_width()
         height = self.double_buffer.get_height()
 
-        worldwidth = self.main.widthofworld
-        worldheight = self.main.heightofworld
+        if self.worldsize is None:
+            worldwidth = self.main.widthofworld
+            worldheight = self.main.heightofworld
+            if self.world is not None:
+                worldwidth += 5
+                worldheight += 5
+            self.originalworldsize = array([worldwidth, worldheight])
+        else:
+            worldwidth, worldheight = self.originalworldsize
+            if state is not None:
+                positions, bees, movement, communication = map(list, zip(*state))
+                
+                func = lambda y,z: y(list(map(lambda x: x[z], positions)))
+                w = func(amax,0) - func(amin,0) + 2
+                h = func(amax,1) - func(amin,1) + 2
+                
+                if worldwidth < w:
+                    worldwidth = w
+                if worldheight < h:
+                    worldheight = h               
                          
         canvasratio = width / height
         worldratio = worldwidth / worldheight
@@ -57,6 +74,7 @@ class View(object):
         elif worldratio > canvasratio:
             worldheight = worldwidth / canvasratio
             center = around(array([worldwidth, worldheight - 1])/2)
+
         self.worldsize = array([worldwidth,worldheight])
 
         self.margin = (self.worldsize - around(self.worldsize - 0.5))/2
@@ -65,52 +83,68 @@ class View(object):
             positions, bees, movement, communication = map(list, zip(*state))
             positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
             centerofmass = around(sum(positions)/len(positions))
+
+            func = lambda y,z: y(list(map(lambda x: x[z], positions)))
+
+            centerbees = around(array([(func(amax,0) - func(amin,0))/2 + func(amin,0),
+                                       (func(amax,1) - func(amin,1))/2 + func(amin,1)]))
             
-            self.offset = center - centerofmass 
+            self.offset = center - centerbees 
             
             self.f  = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
             self.fi = lambda x: x*self.worldsize - 0.5 - self.offset - self.margin
+            self.gridonly = False
+        else:
+            self.f  = lambda x: (x + 0.5  + self.margin)/self.worldsize
+            self.fi = lambda x: x*self.worldsize - 0.5 - self.margin
+            self.gridonly = True
 
     def updateframe(self, state):
-            positions, bees, movement, communication = map(list, zip(*state))
-            
-            width = self.double_buffer.get_width()
-            height = self.double_buffer.get_height()
-            
-            positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
-            
-            x = [x for [x,y] in map(self.f, positions)]
-            y = [y for [x,y] in map(self.f, positions)]
-            
-            if min(x) < 0 or max(x) > 1 or min(y) < 0 or max(y) > 1:
+        if state is None:
+            return
+        
+        positions, bees, movement, communication = map(list, zip(*state))
+        
+        width = self.double_buffer.get_width()
+        height = self.double_buffer.get_height()
+        
+        positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
+        
+        x = [x for [x,y] in map(self.f, positions)]
+        y = [y for [x,y] in map(self.f, positions)]
+        [worldwidth, worldheight] = self.worldsize
+        
+        if min(x) <= 0 or max(x) >= 1 or min(y) <= 0 or max(y) >= 1:
+            if (max(x) - min(x)) >= 1 or (max(y) - min(y)) >= 1:
+                worldwidth += 2
+                worldheight += 2
 
-                if ((max(x) - min(x)) >= 1) or ((max(y) - min(y)) >= 1):
-                    self.worldsize = self.worldsize + 2
+            canvasratio = width / height
+            worldratio = worldwidth / worldheight
 
-                [worldwidth, worldheight] = self.worldsize
+            center = around(array([worldwidth, worldheight])/2)
             
-                canvasratio = width / height
-                worldratio = worldwidth / worldheight
+            if worldratio < canvasratio:
+                worldwidth = worldheight * canvasratio
+                center = around(array([worldwidth - 1, worldheight])/2)
+            elif worldratio > canvasratio:
+                worldheight = worldwidth / canvasratio
+                center = around(array([worldwidth, worldheight - 1])/2)
 
-                center = around(array([worldwidth, worldheight])/2)
-                
-                if worldratio < canvasratio:
-                    worldwidth = worldheight * canvasratio
-                    center = around(array([worldwidth - 1, worldheight])/2)
-                elif worldratio > canvasratio:
-                    worldheight = worldwidth / canvasratio
-                    center = around(array([worldwidth, worldheight - 1])/2)
+            self.worldsize = array([worldwidth,worldheight])
+            
+            func = lambda y,z: y(list(map(lambda x: x[z], positions)))
+            centerbees = around(array([(func(amax,0) - func(amin,0))/2 + func(amin,0),
+                                       (func(amax,1) - func(amin,1))/2 + func(amin,1)]))
+            
+            self.offset = center - centerbees
 
-                self.worldsize = array([worldwidth,worldheight])
-                
-                centerofmass = around(sum(positions)/len(positions))
-                
-                self.margin = (self.worldsize - around(self.worldsize - 0.5))/2
-                
-                self.offset = center - centerofmass 
-                
-                self.f = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
-                self.fi = lambda x: x*self.worldsize - 0.5 - self.offset - self.margin
+            print(self.offset)
+            
+            self.margin = (self.worldsize - around(self.worldsize - 0.5))/2
+            
+            self.f = lambda x: (x + 0.5 + self.offset + self.margin)/self.worldsize
+            self.fi = lambda x: x*self.worldsize - 0.5 - self.offset - self.margin
         
 
     def drawgrid(self, cc):
@@ -196,7 +230,7 @@ class View(object):
     def drawselection(self,cc,state):
         if self.selectedbee is not None:
             pos = next((x[0] for x in state if x[1] is self.selectedbee), None)
-            
+            print(self.f(pos))
             line_width, _ = cc.device_to_user(1.0, 0.0)
             x,y = self.f(pos)
             
@@ -289,46 +323,44 @@ class View(object):
             if self.prevwindowsize is None:
                 self.prevwindowsize = (width,height)
 
-            if self.worldsize is None or self.prevwindowsize != (width,height):
-               self.initiateframe(None)
-            
+            state = None
             if self.world is not None:
                 state = self.world.getworldState()
-                if state is not None:
 
-                    #Update Bee Debug
-                    self.updatebeedebug(state)
+            if self.worldsize is None or self.prevwindowsize != (width,height):
+                self.initiateframe(state)
+            else:
+                self.updateframe(state)
+            
+            if state is not None:
 
-                    #Update Bee Communication
-                    #self.updatebeecommunication(state)
-                    
-                    #Determene frame of reference
+                #Update Bee Debug
+                self.updatebeedebug(state)
 
-                    
-                    if self.f is None or self.prevwindowsize != (width,height):
-                        self.initiateframe(state)
-                    else:
-                        self.updateframe(state)
-                    
-                    #Draw occlusion shading
-                    if self.world.constraints["occlusion"]:
-                        self.drawocclusionshading(cc,state)
-                    
-                    #Draw Grid
-                    self.drawgrid(cc)
+                #Update Bee Communication
+                #self.updatebeecommunication(state)
+                
+                #Determene frame of reference
+                
+                #Draw occlusion shading
+                if self.world.constraints["occlusion"]:
+                    self.drawocclusionshading(cc,state)
+                
+                #Draw Grid
+                self.drawgrid(cc)
 
-                    #Draw Bees
-                    self.drawbees(cc, state)
-                    
-                    #Draw Movement
-                    self.drawmovement(cc, state)
+                #Draw Bees
+                self.drawbees(cc, state)
+                
+                #Draw Movement
+                self.drawmovement(cc, state)
 
-                    #Draw selection
-                    self.drawselection(cc, state)
-                    
-                    #Draw Communication
+                #Draw selection
+                self.drawselection(cc, state)
+                
+                #Draw Communication
 
-                    #Draw Debug Info
+                #Draw Debug Info
             else:
                 self.drawgrid(cc)
             # Flush drawing actions

@@ -326,7 +326,6 @@
                     <property name="can_focus">True</property>
                     <property name="editable">False</property>
                     <property name="placeholder_text" translatable="yes">0</property>
-                    <signal name="changed" handler="on_AmountEntry_changed" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
