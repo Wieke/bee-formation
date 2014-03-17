@@ -2,6 +2,7 @@ from gi.repository import Gtk, Gdk
 from os.path import abspath, dirname, join, splitext
 from numpy.random import randint
 from sys import path
+from imp import reload
 from os import listdir
 from GUISignals import GUISignals
 from World import World
@@ -21,7 +22,7 @@ class BeeForm(object):
         self.selectedbeeclass = None
         self.runworldinterval = 1
         self.running = False
-        self.selectedbeeclass = None
+        self.beeclasses = None
         
         # Build GUI
         self.builder = Gtk.Builder()
@@ -55,7 +56,7 @@ class BeeForm(object):
 
         #Set up Bee Selector
         self.log = ''
-        self.beeclasses = self.loadbees()
+        self.loadbees()
 
         for bee in self.beeclasses:
             self.beetypelist.append([bee.name()])
@@ -116,20 +117,22 @@ class BeeForm(object):
         return s
 
     def reloadbees(self):
-        self.beeclasses = self.loadbees()
+        prev = self.selectedbeeclass.name()
+        
+        self.loadbees()
         
         self.beetypelist.clear()
 
         for bee in self.beeclasses:
             self.beetypelist.append([bee.name()])
 
-        if self.selectedbeeclass is not None:
+        if prev is not None:
             self.selectedbeeclass = next(x for x in self.beeclasses
-                            if x.name() == self.selectedbeeclass.name())
+                            if x.name() == prev)
 
             self.beeselector.set_active(
                 [x.name() for x in self.beeclasses].index(
-                    self.selectedbeeclass.name()))           
+                    prev))           
         
         if self.running:
             self.preparetheworld()
@@ -137,23 +140,27 @@ class BeeForm(object):
     def loadbees(self):
         """Reads the /bees/ folder and imports the bees within"""
 
+        if self.beeclasses is None:
+            func = __import__
+        else:
+            func = lambda x: reload(__import__(x))
+
         names = list(map(lambda x: splitext(x)[0],
                          [ file for file in listdir("bees")
                            if file.endswith(".py")]))
-
+        
         path.append("bees")
 
-        classes = []
+        self.beeclasses = []
         
         for name in names:
             try:
-                classes.append(getattr(__import__(name),name))
+                self.beeclasses.append(getattr(func(name),name))
                 self.logline("Loaded " + name + ".py")
             except Exception as e:
                 self.logline("\nFailed to load " + name + ".py")
                 self.logline(self.exception2str(e) + "\n")                
 
-        return classes
 
     def preparetheworld(self):
         if self.checkbeearguments():
@@ -206,14 +213,15 @@ class BeeForm(object):
             entry = list()
             entry.append(str(position[0]) + "," + str(position[1]))
             entry.append(str(bee.awake))
-            for c in bee.__class__.comkeys():
-                if com is not None:
-                    if c in com:
-                        entry.append(str(com[c]))
+            if bee.__class__.comkeys() is not None:
+                for c in bee.__class__.comkeys():
+                    if com is not None:
+                        if c in com:
+                            entry.append(str(com[c]))
+                        else:
+                            entry.append("None")
                     else:
                         entry.append("None")
-                else:
-                    entry.append("None")
 
             self.comstore.append(entry)
             
@@ -248,6 +256,20 @@ class BeeForm(object):
 
         return True
 
+    def updatebeedebug(self):
+        state = self.world.getworldState()
+        text = "No bee selected."
+        if self.view.selectedbee is not None:
+            if len(self.view.selectedbee.debugInformation) > 0:
+                text = self.view.selectedbee.debugInformation
+            else:
+                text = "No debug info."
+
+        buf = self.beedebugbuffer
+        start, end = buf.get_bounds()
+        buf.delete(start,end)
+        buf.insert(start, text, length=len(text))
+
     def runWorld(self):
         if self.world.totalStates >= 0:
             """When a user goes back in the history this should be pauze somehow
@@ -258,6 +280,7 @@ class BeeForm(object):
                 self.world.stepForward()
                 self.updateDrawingArea()
                 self.updateComlist()
+                self.updatebeedebug()
             timeout_add_seconds(self.runworldinterval, self.runWorld)
         else:
             self.logline("World is not prepared")

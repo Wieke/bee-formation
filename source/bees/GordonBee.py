@@ -29,7 +29,8 @@ class GordonBee(BaseBee):
             centerofmass = around(sum(bees)/len(bees))
 
             move = array([0,0])
-
+            self.debugInformation = "Finding center of blas."
+            
             if centerofmass[0] > 0:
                 move = array([1,0])
             elif centerofmass[0] < 0:

@@ -39,7 +39,7 @@ class BaseBee:
         self.ownCoordinates = args["owncoordinates"]
 
         """String that contains debug information""" 
-        self.debugInformation = None    
+        self.debugInformation = ""    
 
     def behave(self, perception):
         """Return (Numpy.Array([xmovement, ymovement]), Dict(shortRangeComm))"""
