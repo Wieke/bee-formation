@@ -117,7 +117,10 @@ class BeeForm(object):
         return s
 
     def reloadbees(self):
-        prev = self.selectedbeeclass.name()
+        if self.selectedbeeclass is not None:
+            prev = self.selectedbeeclass.name()
+        else:
+            prev = None
         
         self.loadbees()
         

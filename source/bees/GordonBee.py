@@ -37,11 +37,13 @@ class GordonBee(BaseBee):
 
             if move is None:
                 move = array([0,0])
+                
             if self.position is not None:
-                if self.trans is not None:
-                    self.position += dot(move, self.trans)
-                else:
-                    self.position += move
+                self.position += move
+
+            if self.trans is not None:
+                move = dot(self.trans, move)
+                
         else:
             if self.sleepCounter <= 0:
                 self.awake = True
@@ -85,8 +87,8 @@ class GordonBee(BaseBee):
             self.debug("Found center of mass, internal position set to (0,0).")
 
     def moveto(self, point):
-        if self.fi is not None:
-            point = self.fi(point)
+        if self.position is not None:
+            point = point - self.position
         
         if point[0] > 0:
             return array([1,0])
@@ -105,9 +107,11 @@ class GordonBee(BaseBee):
         bees = list(map(self.f, bees))
         
         if self.flag and self.everyoneatorigin:
+            self.debug("Moving to [1,0]")
             self.flag = False
             return array([1,0])
         elif self.everyoneatorigin:
+            self.debug("Checking if everyone left [0,0].")
             if all(map(lambda x: not array_equal(x,array([0,0])),bees)):
                 self.everyoneatorigin = False
                 self.debug("Nobody at origin anymore.")
@@ -161,7 +165,10 @@ class GordonBee(BaseBee):
 
     def phase3(self, perception):
         bees, communication = perception
-        if not array_equal(self.position, array([0,0])):
+        bees = list(map(self.f, bees))
+        
+        if not array_equal(self.position, array([0,0])) and self.flag:
+            self.flag = False
             return self.moveto(array([0,0]))
         elif self.flag:
             if len(communication) != 0:
@@ -208,18 +215,32 @@ class GordonBee(BaseBee):
                 if all(map(lambda x: x['flag'], flag)):
                     self.debug("[1,0] agreed upon, proceding to phase3.")
                     self.currentphase = self.phase5
+                    self.position = array([0,1])
+                    self.trans = array([self.global10,self.global01])
+                    self.f = lambda x: dot(x,self.trans) + self.position
+                    self.fi = lambda x: dot(self.trans, x - self.position)
             else:
                 self.debug("[1,0] agreed upon, proceding to phase3.")
                 self.currentphase = self.phase5
+                self.position = array([0,1])
+                self.trans = array([self.global10,self.global01])
+                self.f = lambda x: dot(x, self.trans) + self.position
+                self.fi = lambda x: dot(self.trans, x - self.position)
         else:
             up = 0
             down = 0
             
             for pos in bees:
-                if array_equal(pos,array([0,1])):
-                    up += 1
-                elif array_equal(pos,array([0,-1])):
-                    down += 1
+                if rotate:                
+                    if array_equal(pos,array([1,0])):
+                        up += 1
+                    elif array_equal(pos,array([-1,0])):
+                        down += 1
+                else:                
+                    if array_equal(pos,array([0,1])):
+                        up += 1
+                    elif array_equal(pos,array([0,-1])):
+                        down += 1
 
             if up == max(up,down):
                 self.debug("Up is favored")
@@ -245,5 +266,9 @@ class GordonBee(BaseBee):
                     self.debug("Arrived at argreed best.")
 
     def phase5(self, perception):
-        self.debug("Arrived at phase5.\nglobal10=" + str(self.global10) + "\nglobal01="+str(self.global01))
+        t = "Arrived at phase5." + "\ntrans=" + str(self.trans) + "\nposition=" + str(self.position) + "n\Other bees:"
+        for pos in perception[0]:
+            t += "\n" + str(pos) + "->" + str(self.f(pos))
+        self.debug(t)
+        return self.moveto(array([2,2]))
         
