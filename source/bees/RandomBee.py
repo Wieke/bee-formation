@@ -10,7 +10,7 @@ class RandomBee(BaseBee):
         return {"occlusion":False, "collision":False, "comrange":0}
     
     def name():
-        return "Random bee2"
+        return "Random bee"
 
     #Non-static methods
     def __init__(self, args):

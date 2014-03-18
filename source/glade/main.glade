@@ -13,7 +13,6 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="beecommunicationstore"/>
   <object class="GtkTextBuffer" id="beedebugbuffer"/>
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
@@ -79,7 +78,6 @@
                       <object class="GtkTreeView" id="communicationlist">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="model">beecommunicationstore</property>
                         <child internal-child="selection">
                           <object class="GtkTreeSelection" id="treeview-selection4"/>
                         </child>
@@ -112,6 +110,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="editable">False</property>
+                        <property name="wrap_mode">char</property>
                         <property name="cursor_visible">False</property>
                         <property name="buffer">beedebugbuffer</property>
                       </object>

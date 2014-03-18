@@ -179,30 +179,58 @@ class View(object):
 
         todraw = dict()
         
-        for pos,_,_,_ in state:
+        for pos,bee,_,_ in state:
             key = (pos[0],pos[1])
             if key in todraw:
-                todraw[key] = (todraw[key][0],todraw[key][1]+1)
+                if bee.awake:
+                    todraw[key] = (todraw[key][0],todraw[key][1]+1, todraw[key][2]+1, todraw[key][3])
+                else:
+                    todraw[key] = (todraw[key][0],todraw[key][1]+1, todraw[key][2], todraw[key][3]+1)                    
             else:
-                todraw[key]  = (pos,1)
+                if bee.awake:
+                    todraw[key]  = (pos,1,1,0)
+                else:
+                    todraw[key]  = (pos,1,0,1)
             
-        for pos,nr in todraw.values():
+        for pos,nr,awake,sleeping in todraw.values():
             x,y = self.f(pos)
-            
-            cc.save()
-            cc.translate(x,y)
-            cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
-            cc.arc(0,0,0.35,0, 2*pi)
-            cc.move_to(0,0)
-            cc.restore()
-            cc.set_line_width(line_width)
-            cc.set_source_rgb(0, 0, 0)
-            cc.fill()
+
+            if nr == 1:
+                cc.save()
+                cc.translate(x,y)
+                cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
+                cc.arc(0,0,0.35,0, 2*pi)
+                cc.move_to(0,0)
+                cc.restore()
+
+                if awake == 1:
+                    cc.set_source_rgb(0, 0, 0)
+                else:
+                    cc.set_source_rgb(0.8, 0.8, 0.8)
+                cc.fill()
 
             if nr > 1:
                 cc.save()
                 cc.translate(x,y)
                 cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
+                if sleeping > 0:
+                    cc.move_to(0,0)
+                    cc.arc(0,0,0.35,0, 2*(awake/(sleeping+awake))*pi)
+                    cc.line_to(0,0)
+                    cc.set_source_rgb(0, 0, 0)
+                    cc.fill()
+
+
+                    cc.move_to(0,0)
+                    cc.arc(0,0,0.35,2*(awake/(sleeping+awake))*pi, 2*pi)
+                    cc.line_to(0,0)
+                    cc.set_source_rgb(0.8, 0.8, 0.8)
+                    cc.fill()
+                else:
+                    cc.arc(0,0,0.35,0, 2*pi)                    
+                    cc.set_source_rgb(0, 0, 0)
+                    cc.fill()
+
                 cc.set_font_size(0.6)
                 (x, y, width, height, dx, dy) = cc.text_extents(str(nr))
                 cc.set_source_rgb(1, 1, 1)

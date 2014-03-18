@@ -127,12 +127,13 @@ class BeeForm(object):
             self.beetypelist.append([bee.name()])
 
         if prev is not None:
-            self.selectedbeeclass = next(x for x in self.beeclasses
-                            if x.name() == prev)
+            self.selectedbeeclass = next((x for x in self.beeclasses
+                            if x.name() == prev), None)
 
-            self.beeselector.set_active(
-                [x.name() for x in self.beeclasses].index(
-                    prev))           
+            if self.selectedbeeclass is not None:
+                self.beeselector.set_active(
+                    [x.name() for x in self.beeclasses].index(
+                        prev))
         
         if self.running:
             self.preparetheworld()
