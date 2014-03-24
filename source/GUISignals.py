@@ -14,10 +14,20 @@ class GUISignals(object):
         self.view.clickEvent(event.x/widget.get_allocated_width(),
                              event.y/widget.get_allocated_height())
         self.main.updateDrawingArea()
+        self.main.updatebeedebug()
 
     def on_mainwindow_destroy(self, widget):
         """Quit Gtk"""
         Gtk.main_quit()
+
+    def on_BackButton_clicked(self, widget):
+        self.main.stepback()
+
+    def on_PlayButton_clicked(self, widget):
+        self.main.startstop()
+
+    def on_ForwardButton_clicked(self, widget):
+        self.main.stepforward()    
 
     def on_InitializeButton_clicked(self, widget):
         """Initialize world"""
@@ -109,6 +119,8 @@ class GUISignals(object):
                             new[k] = None
                     else:
                         new[k] = None
+                if "formation" in self.main.beearguments:
+                    new["formation"] = self.main.beearguments["formation"]
                 self.main.beearguments = new
             else:
                 self.main.beearguments = self.main.selectedbeeclass.arguments()
@@ -121,15 +133,16 @@ class GUISignals(object):
             
             if self.main.beearguments != None:
                 for key, value in self.main.beearguments.items():
-                    if value is None:
-                        t = ""
-                    else:
-                        t = str(value)
-                        
-                    self.main.argumentstore.append([key + " (" + args[key].__name__ + ")"
-                                                    , t])
-                    self.main.argumenttypes.append(args[key])
-                    self.main.beearguments[key] = value
+                    if key != "formation":
+                        if value is None:
+                            t = ""
+                        else:
+                            t = str(value)
+                            
+                        self.main.argumentstore.append([key + " (" + args[key].__name__ + ")"
+                                                        , t])
+                        self.main.argumenttypes.append(args[key])
+                        self.main.beearguments[key] = value
                 
         
 

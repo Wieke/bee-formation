@@ -23,6 +23,7 @@ class BeeForm(object):
         self.runworldinterval = 1
         self.running = False
         self.beeclasses = None
+        self.world = None
         
         # Build GUI
         self.builder = Gtk.Builder()
@@ -43,6 +44,7 @@ class BeeForm(object):
         self.comstore = None
         self.comlist = go('communicationlist')
         self.drawarea = go("world")
+        self.timelabel = go("time")
 
         #Add EventMask to drawarea
         self.drawarea.add_events(Gdk.EventMask.BUTTON_PRESS_MASK) 
@@ -110,6 +112,8 @@ class BeeForm(object):
             text, length=len(text))
 
     def exception2str(self, e):
+        if e.__class__ is AttributeError:
+            return e.args[0]
         s =  "Traceback (most recent call only):\n"
         s += "  File \"" + e.filename + ", line " + str(e.lineno) + "\n"
         s += e.text + " "*(e.offset-1) + "^" + "\n"
@@ -177,12 +181,44 @@ class BeeForm(object):
             self.view.startworldwidth = self.widthofworld
             self.view.startworldheight = self.heightofworld
             self.view.reset(self.world)
+            self.updatetime()
             self.updateDrawingArea()
             self.setupcomlist()
-            if not self.running:
-                self.runWorld()
-                self.running = True
 
+
+    def startstop(self):
+        print(self.world)
+        if self.world is not None:
+            print(self.running)
+            if not self.running:
+                self.running = True
+                timeout_add_seconds(self.runworldinterval, self.runWorld)
+            else:
+                self.running = False
+
+    def stepback(self):
+        if self.world is not None:
+            if self.world.currentState > 0:            
+                self.running = False
+                self.world.stepBackward()
+                self.updateDrawingArea()
+                self.updateComlist()
+                self.updatebeedebug()
+                self.updatetime()
+
+    def stepforward(self):
+        if self.world is not None:
+            self.running = False
+            self.world.stepForward()
+            self.updateDrawingArea()
+            self.updateComlist()
+            self.updatebeedebug()
+            self.updatetime()            
+
+    def updatetime(self):
+        text = str(self.world.currentState) + " / " + str(self.world.totalStates)
+        self.timelabel.set_text(text)
+    
     def setupcomlist(self):
         position = 0
 
@@ -238,7 +274,8 @@ class BeeForm(object):
         if self.amountofbees == None:
             self.logline("Amount of bees not set.")
             return False
-        elif self.amountofbees < 1:
+        
+        elif self.amountofbees < 1 or "formation" not in self.beearguments:
             self.logline("Please draw a formation of at least a single bee")
             return False
             
@@ -261,33 +298,36 @@ class BeeForm(object):
         return True
 
     def updatebeedebug(self):
-        state = self.world.getworldState()
-        text = "No bee selected."
-        if self.view.selectedbee is not None:
-            if len(self.view.selectedbee.debugInformation) > 0:
-                text = self.view.selectedbee.debugInformation
-            else:
-                text = "No debug info."
+        if self.world is not None:
+            state = self.world.getworldState()
+            text = "No bee selected."
+            if self.view.selectedbee is not None:
+                if len(self.view.selectedbee.debugInformation) > 0:
+                    text = self.view.selectedbee.debugInformation
+                else:
+                    text = "No debug info."
 
-        buf = self.beedebugbuffer
-        start, end = buf.get_bounds()
-        buf.delete(start,end)
-        buf.insert(start, text, length=len(text))
+            buf = self.beedebugbuffer
+            start, end = buf.get_bounds()
+            buf.delete(start,end)
+            buf.insert(start, text, length=len(text))
 
     def runWorld(self):
-        if self.world.totalStates >= 0:
-            """When a user goes back in the history this should be pauze somehow
-               e.g. when states are not equal the user is going back in time.
-               Disadvantage the max wait is 'runworldinterval' second(s) to contiue
-            """
-            if self.world.currentState == self.world.totalStates:
-                self.world.stepForward()
-                self.updateDrawingArea()
-                self.updateComlist()
-                self.updatebeedebug()
-            timeout_add_seconds(self.runworldinterval, self.runWorld)
-        else:
-            self.logline("World is not prepared")
+        if self.running:
+            if self.world.totalStates >= 0:
+                """When a user goes back in the history this should be pauze somehow
+                   e.g. when states are not equal the user is going back in time.
+                   Disadvantage the max wait is 'runworldinterval' second(s) to contiue
+                    """
+                if self.world.currentState == self.world.totalStates:
+                    self.world.stepForward()
+                    self.updateDrawingArea()
+                    self.updateComlist()
+                    self.updatebeedebug()
+                    self.updatetime()
+                timeout_add_seconds(self.runworldinterval, self.runWorld)
+            else:
+                self.logline("World is not prepared")
 
 if __name__ == '__main__':
     gui = BeeForm()
