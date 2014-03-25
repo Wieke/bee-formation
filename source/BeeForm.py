@@ -187,9 +187,7 @@ class BeeForm(object):
 
 
     def startstop(self):
-        print(self.world)
         if self.world is not None:
-            print(self.running)
             if not self.running:
                 self.running = True
                 timeout_add_seconds(self.runworldinterval, self.runWorld)
@@ -315,10 +313,6 @@ class BeeForm(object):
     def runWorld(self):
         if self.running:
             if self.world.totalStates >= 0:
-                """When a user goes back in the history this should be pauze somehow
-                   e.g. when states are not equal the user is going back in time.
-                   Disadvantage the max wait is 'runworldinterval' second(s) to contiue
-                    """
                 if self.world.currentState == self.world.totalStates:
                     self.world.stepForward()
                     self.updateDrawingArea()
