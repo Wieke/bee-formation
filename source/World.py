@@ -65,6 +65,11 @@ class World(object):
 
             #Set elements for new state
             locations = list(map(sum, zip(oldLocations, oldMoves)))
+
+            #tackle collisions
+            #if (self.constraints["collision"]:
+                #find collisions
+                
             newShortRangeComs = []
             globalMovement = []
 
@@ -83,7 +88,6 @@ class World(object):
                 globalMovement.append(move)
                 newShortRangeComs.append(newShortRangeCom)
                 index += 1
-
             #Add the new state to the list of states
             self.worldStates.append(list(zip(locations,bees,globalMovement,newShortRangeComs)))       
             self.totalStates += 1
@@ -207,5 +211,21 @@ def lineofsight(p1, p2, positions):
                 return False
             if any(map(lambda x: np.array_equal(x,pl), positions)):
                 return False
-    
-    return True   
+    return True
+
+def findCollisions(old, new, moves):
+    collisions = []
+    for i in range(0,len(new)):
+        collions.append(arrayDuplicates(new[i], new))
+    return collisions
+
+def arrayDublicates(x, xs):
+    dubs = []
+    for i in range(0,len(xs)):
+        if(np.array_equal(x, xs[i]))
+                dubs.append(i)
+    if len(dubs) > 1:
+        return dubs
+    else:
+        return []
+                
