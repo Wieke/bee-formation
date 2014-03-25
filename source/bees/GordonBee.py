@@ -69,7 +69,9 @@ class GordonBee(BaseBee):
                             self.trans = array([most_popular,[0,1]])
                         else:
                             self.trans = array([most_popular,[1,0]])
-                            
+
+                        print("most_popular=",most_popular,"\ntrans=",self.trans)
+                                                    
                         self.position = array([1,0])
                         self.debugInformation = "Everyone has raised flag"
 
@@ -129,8 +131,8 @@ class GordonBee(BaseBee):
         
         if self.phase == 2:
             point -= self.position
-        elif self.phase == 3:
-            point = dot(self.trans, point - self.position)
+        elif self.phase > 2:
+            point = dot( point - self.position, self.trans)
 
         return sum(map(lambda x: array_equal(point,x),pos))
 
@@ -170,7 +172,7 @@ class GordonBee(BaseBee):
         if self.phase == 2:
             point = self.destination.copy() - self.position
         elif self.phase > 2:
-            point = dot(self.trans, self.destination.copy() - self.position)
+            point = dot(self.destination.copy() - self.position, self.trans)
         else:
             point = self.destination.copy()
         
@@ -191,7 +193,7 @@ class GordonBee(BaseBee):
         if self.phase == 2:
             self.position += move
         elif self.phase > 2:
-            self.position += dot(move, self.trans)
+            self.position += dot(self.trans, move)
 
         self.debugInformation += "\nposition=" + str(self.position) + "\ntrans=" + str(self.trans)
         self.debugInformation += "\ntransformation=" + str(self.transformation)

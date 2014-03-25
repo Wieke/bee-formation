@@ -265,13 +265,19 @@ class View(object):
         for pos,_ , move, _ in state:
             x,y = self.f(pos)
 
-            if move[0] != 0 and move[1] != 0:
+            if move[0] != 0 or move[1] != 0:
             
                 cc.save()
                 cc.translate(x,y)
                 cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
 
-                cc.rotate(atan(move[1]/move[0]))
+                if array_equal(move, array([-1,0])):
+                    cc.rotate(pi)
+                elif array_equal(move, array([0,1])):
+                    cc.rotate(0.5*pi)
+                elif array_equal(move, array([0,-1])):
+                    cc.rotate(1.5*pi)
+                
                 cc.move_to(0,0)
                 cc.line_to(1,0)
 
@@ -348,16 +354,17 @@ class View(object):
             cc.fill()
 
             if self.prevwindowsize is None:
-                self.prevwindowsize = (width,height)
+                self.prevwindowsize = array([width,height])
 
             state = None
             if self.world is not None:
                 state = self.world.getworldState()
 
-            if self.worldsize is None or self.prevwindowsize != (width,height):
+            if self.worldsize is None or not array_equal(self.prevwindowsize,array([width,height])):
                 self.initiateframe(state)
-            else:
-                self.updateframe(state)
+                self.prevwindowsize = array([width,height])
+            #else:
+            #    self.updateframe(state)
             
             if state is not None:
 
