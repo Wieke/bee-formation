@@ -1,4 +1,5 @@
 import cairo
+import time
 from random import *
 import itertools
 import numpy as np
@@ -14,11 +15,16 @@ class World(object):
         #Parameters that need to be looked at
         self.sleepRate = 0.1
         self.sleepLimit = 10
-
         #possible counterclockwise rotations 0, 90, 180, 270 gegrees
         self.possibleRotations = {0: np.array([[1,0],[0,1]]), 1:
         np.array([[0,-1],[1,0]]),
          2: np.array([[-1,0],[0,-1]]), 3: np.array([[0,1],[-1,0]])}
+
+        ##MEASUREMENTS##
+        self.timeToFinish = None
+        self.timeToStart = time.clock()
+        self.beeSteps = 0
+        self.sizeOfWorld = 0
 
         ##CREATION OF THE FIRST WORLD STATE##
         #assign every bee a random location in the grid
@@ -50,7 +56,7 @@ class World(object):
         self.currentState = 0 
         self.worldStates = [list(zip(beeLocations,listOfBees,globalMovement,shortRangeCom))]
 
-          
+    ##MAIN METHODS##
     def stepForward(self):
         #If state is not in the present move the current state one step closer to the present
         if self.currentState < self.totalStates:
@@ -65,7 +71,13 @@ class World(object):
             shortRangeComs = list(oldState[3])
 
             #Set elements for new state
-            locations = list(map(sum, zip(oldLocations, oldMoves)))
+            #locations = list(map(sum, zip(oldLocations, oldMoves)))
+            locations = [0] * self.numberOfBees
+            for index in range(0,self.numberOfBees):
+                if oldMoves[index] is None:
+                    locations[index] = oldLocations[index]
+                else:
+                    locations[index] = oldLocations[index] + oldMoves[index]
             feedback = [True] * self.numberOfBees
 
             #tackle collisions
@@ -92,7 +104,10 @@ class World(object):
 
                 #In any case the bee will execute a behavior (if sleeping => minus 1 on the sleep counter)    
                 (beeMovement, newShortRangeCom) = bee.behave(self._perception(locations, shortRangeComs, index, bee, feedback))
-                move = np.dot(beeMovement, bee.transformation) #From local to global - transformation on the right side
+                if beeMovement is None:
+                    move = None
+                else:
+                    move = np.dot(beeMovement, bee.transformation) #From local to global - transformation on the right side
                 globalMovement.append(move)
                 newShortRangeComs.append(newShortRangeCom)
                 index += 1
@@ -100,6 +115,9 @@ class World(object):
             self.worldStates.append(list(zip(locations,bees,globalMovement,newShortRangeComs)))       
             self.totalStates += 1
             self.currentState += 1
+
+            if globalMovement.count(None) == len(globalMovement):
+                self.timeToFinish = time.clock() - self.timeToStart     
 
     def stepBackward(self):
         if self.currentState <= 0:
@@ -119,6 +137,7 @@ class World(object):
         else:
             return self.worldStates[self.currentState]
 
+    ##HELPER METHODS##
     def _perception(self, locations, shortRangeComs, index, bee, feedback):
         ownLocation = locations[index]
         otherLocations = locations[:index] + locations[(index + 1):]
@@ -165,15 +184,8 @@ class World(object):
             accesShortRangeComs = list(zip(list(map(lambda x: np.dot(bee.transformation,(x-ownLocation))+bee.ownCoordinates, otherLocations)), othershortRangeComs))
 
         return accesShortRangeComs
-        
-class IlligalStateException(Exception):
-    def __init__(self, enteredState, totalNumberStates):
-        self.enteredState = enteredState
-        self.totalNumberStates = totalNumberStates
-    def __str__(self):
-        return "Given state: " + repr(self.enteredState) + " is illigal. Has to be an integer between 0 and " + repr(self.totalNumberStates)
 
-
+##STATIC METHODS##
 def linfunc(p1,p2):
     x1, y1 = p1
     x2, y2 = p2
@@ -229,3 +241,12 @@ def findCollisions(new):
                 collisions.append(j)
     collisions.sort()
     return collisions
+
+##EXCEOTION CLASS##
+class IlligalStateException(Exception):
+    def __init__(self, enteredState, totalNumberStates):
+        self.enteredState = enteredState
+        self.totalNumberStates = totalNumberStates
+    def __str__(self):
+        return "Given state: " + repr(self.enteredState) + " is illigal. Has to be an integer between 0 and " + repr(self.totalNumberStates)
+
