@@ -6,14 +6,11 @@ import numpy as np
 class World(object):
 
     def __init__(self, beeType, numberOfBees, width, height, args, worldseed):
-        self.beeType = None
-        self.numberOfBees = None
-        self.contraints = None
-        self.worldStates = None
-        self.totalStates = -1
-        self.currentState = -1
-        self.worldGenerator = None
-
+        ##INITIAL PARAMETERS##
+        self.beeType = beeType
+        self.numberOfBees = numberOfBees
+        self.constraints = beeType.worldConstraints() #dict("occlusion", "collision", "comrange")
+        self.worldGenerator = Random(worldseed)
         #Parameters that need to be looked at
         self.sleepRate = 0.1
         self.sleepLimit = 10
@@ -22,14 +19,8 @@ class World(object):
         self.possibleRotations = {0: np.array([[1,0],[0,1]]), 1:
         np.array([[0,-1],[1,0]]),
          2: np.array([[-1,0],[0,-1]]), 3: np.array([[0,1],[-1,0]])}
-        
-        self.beeType = beeType
-        self.numberOfBees = numberOfBees
-        self.worldGenerator = Random(worldseed)
-        
-        #Set constraints dict("occlusion", "collision", "comrange")
-        self.constraints = beeType.worldConstraints()
 
+        ##CREATION OF THE FIRST WORLD STATE##
         #assign every bee a random location in the grid
         beeLocations = []
         beePossibleLocations = list(itertools.product(range(0,width),range(0,height)))
@@ -40,22 +31,24 @@ class World(object):
 
         #create the specified number of bee instances
         listOfBees = []
-        for _ in range(numberOfBees):
+        globalMovement = []
+        shortRangeCom = []
+        for index in range(numberOfBees):
             args["seed"] = Random(args["seed"]).random()
             args["transformation"] = self.possibleRotations[self.worldGenerator.randint(0,3)]
             args["owncoordinates"] = np.array([0,0])
-            listOfBees.append(self.beeType(args))
-
-        #Set the global movement of every bee to zero
-        globalMovement = [np.array([0,0])] * numberOfBees
-
-        #Set every short range communication of every bee to None
-        shortRangeCom = [None] * numberOfBees
+            newBee = self.beeType(args)
+            listOfBees.append(newBee)
+            (beeMovement, newShortRangeCom) = newBee.behave(self._perception(beeLocations, [None] * numberOfBees, index, newBee))
+            move = np.dot(beeMovement, newBee.transformation) #From local to global - transformation on the right side
+            globalMovement.append(move)
+            shortRangeCom.append(newShortRangeCom)            
 
         #Create the worldstate at t = 0
+        self.totalStates = 0
+        self.currentState = 0 
         self.worldStates = [list(zip(beeLocations,listOfBees,globalMovement,shortRangeCom))]
-        self.totalStates += 1
-        self.currentState += 1
+
           
     def stepForward(self):
         #If state is not in the present move the current state one step closer to the present
@@ -64,17 +57,17 @@ class World(object):
         #Else generate a new state
         else:
             #Retrieve old state
-            states = list(zip(*self.worldStates[self.currentState]))
-            locations = list(states[0])
-            bees = list(states[1])
-            shortRangeComs = statesbeeState = list(states[3])
+            oldState = list(zip(*self.worldStates[self.currentState]))
+            oldLocations = list(oldState[0])
+            oldMoves = list(oldState[2])
+            bees = list(oldState[1])
+            shortRangeComs = list(oldState[3])
 
             #Set elements for new state
-            globalMovement = []
+            locations = list(map(sum, zip(oldLocations, oldMoves)))
             newShortRangeComs = []
-            newLocations = []
+            globalMovement = []
 
-            self.temp=[] #remove this
             #Let every bee behave
             index=0
             for bee in bees:
@@ -88,19 +81,13 @@ class World(object):
                 (beeMovement, newShortRangeCom) = bee.behave(self._perception(locations, shortRangeComs, index, bee))
                 move = np.dot(beeMovement, bee.transformation) #From local to global - transformation on the right side
                 globalMovement.append(move)
-                newLocations.append(locations[index] + move)
                 newShortRangeComs.append(newShortRangeCom)
-
-                #When collision is an issue a sequential update is needed. In other words: the current bee needs information of the most up-to-date positions
-                if self.constraints["collision"]:
-                    locations[index] = locations[index] + globalMovement[index]
                 index += 1
 
             #Add the new state to the list of states
-            self.worldStates.append(list(zip(newLocations,bees,globalMovement,newShortRangeComs)))       
+            self.worldStates.append(list(zip(locations,bees,globalMovement,newShortRangeComs)))       
             self.totalStates += 1
             self.currentState += 1
-            print(self.temp)
 
     def stepBackward(self):
         if self.currentState <= 0:
@@ -127,7 +114,6 @@ class World(object):
         accesLocations = []
         if self.constraints["occlusion"]:
             #With occlusion only not blocked agents can be seen
-            counter = 0
             for otherLoc in otherLocations:
                 if lineofsight(ownLocation, otherLoc, otherLocations):
                     #from global to local:
@@ -135,9 +121,6 @@ class World(object):
                     #2. rotate by np.dot with the transformation matrix on the left side
                     #3. correct for local origin + Bee.ownCoordinates
                     accesLocations.append(np.dot(bee.transformation,(otherLoc-ownLocation))+bee.ownCoordinates)
-                    counter += 1
-            self.temp.append(counter)
-
         else:
             #Without occlusion all the other agents can be seen
             accesLocations = list(map(lambda a: np.dot(bee.transformation,(a-ownLocation))+bee.ownCoordinates , otherLocations))
