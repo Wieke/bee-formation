@@ -95,6 +95,7 @@ class View(object):
 
         if state is not None:
             positions, bees, movement, communication = map(list, zip(*state))
+            movement = [array([0,0]) if x==None else x for x in movement]
             positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
             centerofmass = around(sum(positions)/len(positions))
 
@@ -118,7 +119,7 @@ class View(object):
             return
         
         positions, bees, movement, communication = map(list, zip(*state))
-        
+        movement = [array([0,0]) if x==None else x for x in movement]
         width = self.double_buffer.get_width()
         height = self.double_buffer.get_height()
         

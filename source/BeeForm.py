@@ -322,7 +322,7 @@ class BeeForm(object):
                 timeout_add_seconds(self.runworldinterval, self.runWorld)
             else:
                 self.startstop()
-                self.logline("Finished in " + str(self.world.timeToFinish) + " seconds!")
+                self.logline("Finished in " + str(self.world.timeToFinish) + " seconds!\nEnergy consumed: " + str(self.world.beeSteps) + "\nSpace needed: " + str(self.world.sizeOfWorld))
 
 if __name__ == '__main__':
     gui = BeeForm()

@@ -78,6 +78,10 @@ class World(object):
                     locations[index] = oldLocations[index]
                 else:
                     locations[index] = oldLocations[index] + oldMoves[index]
+                    self.beeSteps += 1 #every step is counted as a measurement for the experiment
+                    maxSize = max(locations[index][0],locations[index][1])
+                    if (maxSize > self.sizeOfWorld):
+                        self.sizeOfWorld = maxSize #size is also taken as measure
             feedback = [True] * self.numberOfBees
 
             #tackle collisions
@@ -87,6 +91,7 @@ class World(object):
                     for collision in findCollisions(locations):
                         if np.array_equal(oldLocations[collision], locations[collision]):
                             feedback[collision] = False
+                            self.beeSteps += 1 #every mistake is an additional penalty
                         locations[collision] = oldLocations[collision]
                     collisions = findCollisions(locations)
                     
@@ -116,7 +121,9 @@ class World(object):
             self.totalStates += 1
             self.currentState += 1
 
+            #See if the pattern is formed according to the bees
             if globalMovement.count(None) == len(globalMovement):
+                #timeToFinish is a measurement for the experiment
                 self.timeToFinish = time.clock() - self.timeToStart     
 
     def stepBackward(self):
