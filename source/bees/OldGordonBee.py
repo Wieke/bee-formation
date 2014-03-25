@@ -58,7 +58,7 @@ class OldGordonBee(BaseBee):
         self.debugInformation = str(self.time) + ": " + text
 
     def phase1(self, perception):
-        bees, communication = perception
+        bees, communication, feedback = perception
         
         centerofmass = around(sum(bees)/len(bees))
 
@@ -102,7 +102,7 @@ class OldGordonBee(BaseBee):
             return array([0,0])
 
     def phase2(self, perception):
-        bees, communication = perception
+        bees, communication, feedback = perception
 
         bees = list(map(self.f, bees))
         
@@ -164,7 +164,7 @@ class OldGordonBee(BaseBee):
                     self.debug("Arrived at argreed best.")
 
     def phase3(self, perception):
-        bees, communication = perception
+        bees, communication, feedback = perception
         bees = list(map(self.f, bees))
         
         if not array_equal(self.position, array([0,0])) and self.flag:
@@ -189,7 +189,7 @@ class OldGordonBee(BaseBee):
 
 
     def phase4(self, perception):
-        bees, communication = perception
+        bees, communication, feedback = perception
 
         bees = list(map(self.f, bees))
 

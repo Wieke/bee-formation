@@ -33,13 +33,14 @@ class World(object):
         listOfBees = []
         globalMovement = []
         shortRangeCom = []
+        feedback = [True] * numberOfBees
         for index in range(numberOfBees):
             args["seed"] = Random(args["seed"]).random()
             args["transformation"] = self.possibleRotations[self.worldGenerator.randint(0,3)]
             args["owncoordinates"] = np.array([0,0])
             newBee = self.beeType(args)
             listOfBees.append(newBee)
-            (beeMovement, newShortRangeCom) = newBee.behave(self._perception(beeLocations, [None] * numberOfBees, index, newBee))
+            (beeMovement, newShortRangeCom) = newBee.behave(self._perception(beeLocations, [None] * numberOfBees, index, newBee, feedback))
             move = np.dot(beeMovement, newBee.transformation) #From local to global - transformation on the right side
             globalMovement.append(move)
             shortRangeCom.append(newShortRangeCom)            
@@ -65,11 +66,18 @@ class World(object):
 
             #Set elements for new state
             locations = list(map(sum, zip(oldLocations, oldMoves)))
+            feedback = [True] * self.numberOfBees
 
             #tackle collisions
-            #if (self.constraints["collision"]:
-                #find collisions
-                
+            if (self.constraints["collision"]):
+                collisions = findCollisions(locations)
+                while(len(collisions) != 0):
+                    for collision in findCollisions(locations):
+                        if np.array_equal(oldLocations[collision], locations[collision]):
+                            feedback[collision] = False
+                        locations[collision] = oldLocations[collision]
+                    collisions = findCollisions(locations)
+                    
             newShortRangeComs = []
             globalMovement = []
 
@@ -83,7 +91,7 @@ class World(object):
                         bee.sleepCounter = self.worldGenerator.randint(1,self.sleepLimit)
 
                 #In any case the bee will execute a behavior (if sleeping => minus 1 on the sleep counter)    
-                (beeMovement, newShortRangeCom) = bee.behave(self._perception(locations, shortRangeComs, index, bee))
+                (beeMovement, newShortRangeCom) = bee.behave(self._perception(locations, shortRangeComs, index, bee, feedback))
                 move = np.dot(beeMovement, bee.transformation) #From local to global - transformation on the right side
                 globalMovement.append(move)
                 newShortRangeComs.append(newShortRangeCom)
@@ -111,7 +119,7 @@ class World(object):
         else:
             return self.worldStates[self.currentState]
 
-    def _perception(self, locations, shortRangeComs, index, bee):
+    def _perception(self, locations, shortRangeComs, index, bee, feedback):
         ownLocation = locations[index]
         otherLocations = locations[:index] + locations[(index + 1):]
         othershortRangeComs = shortRangeComs[:index] + shortRangeComs[(index + 1):]
@@ -131,7 +139,7 @@ class World(object):
 
         accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs, bee) 
         
-        return (accesLocations, accesShortRangeComs)
+        return (accesLocations, accesShortRangeComs, feedback[index])
 
     def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs, bee):
         accesShortRangeComs = []
@@ -213,19 +221,11 @@ def lineofsight(p1, p2, positions):
                 return False
     return True
 
-def findCollisions(old, new, moves):
+def findCollisions(new):
     collisions = []
     for i in range(0,len(new)):
-        collions.append(arrayDuplicates(new[i], new))
+        for j in range(0,len(new)):
+            if(i != j and np.array_equal(new[i], new[j]) and collisions.count(j) == 0):
+                collisions.append(j)
+    collisions.sort()
     return collisions
-
-def arrayDublicates(x, xs):
-    dubs = []
-    for i in range(0,len(xs)):
-        if(np.array_equal(x, xs[i])):
-                dubs.append(i)
-    if len(dubs) > 1:
-        return dubs
-    else:
-        return []
-                

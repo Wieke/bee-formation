@@ -19,7 +19,7 @@ class GravityBee(BaseBee):
     def behave(self, perception):
         if self.awake:
             r = self.generator.random()
-            bees, communication = perception
+            bees, communication, feedback = perception
             
             centerofmass = np.around(sum(bees)/len(bees))
 

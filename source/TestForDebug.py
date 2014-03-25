@@ -1,10 +1,7 @@
-from BeeForm import BeeForm
-
-form = BeeForm()
-form.selectedbeeclass = form.beeclasses[1]
-form.beearguments = form.selectedbeeclass.arguments()
-form.checkbeearguments()
-form.preparetheworld()
-states = []
-states.append(form.world.getworldState())
-positions, bees, movement, communication = map(list, zip(*states[0]))
+import numpy as np
+from numpy import array
+old = [array([1,2]), array([1,1]), array([2,1]), array([3,5])]
+new = [array([1,2]), array([2,1]), array([2,1]), array([3,5])]
+moves = [array([0,0]), array([1,0]), array([0,0]), array([0,0])]
+import World
+a = World.findCollisions(new)
