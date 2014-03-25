@@ -222,7 +222,7 @@ def findCollisions(old, new, moves):
 def arrayDublicates(x, xs):
     dubs = []
     for i in range(0,len(xs)):
-        if(np.array_equal(x, xs[i]))
+        if(np.array_equal(x, xs[i])):
                 dubs.append(i)
     if len(dubs) > 1:
         return dubs
