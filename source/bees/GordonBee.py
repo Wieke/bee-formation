@@ -2,7 +2,9 @@ import sys
 sys.path.append("..")
 
 from BaseBee import BaseBee
-from numpy import array, array_equal, around, dot
+from numpy import array, array_equal, around, dot, arange
+from sys import maxsize
+from itertools import product as iterprod
 
 class GordonBee(BaseBee):
     #Static methods
@@ -111,6 +113,10 @@ class GordonBee(BaseBee):
                         self.debugInformation = "Everyone has raised flag"
 
             elif self.phase == 4:
+                """ Move to ordering formation """
+
+                
+                
                 self.destination = array([1,3])
                 
         else:
@@ -162,6 +168,20 @@ class GordonBee(BaseBee):
         else:
             print("This is not supposed to happen")
             return False
+
+    def order_formation(self, n):
+        mindist = maxsize
+        for i in range(1,n):
+            if abs(int(n/i + 0.5) - (i*2 -1)) < mindist:
+                mindist = abs(int(n/i + 0.5) - (i*2 -1))
+            else:
+                y = int(n/(i - 1) + 0.5)
+                x = i - 1
+                print("y ", y," x ",x)
+                break
+
+        return list(iterprod(arange(-1*int(y/2),int(y/2)+1),
+                             arange(-1*int((x*2-1)/2), int((x*2-1)/2)+1, 2)))
 
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
