@@ -1,0 +1,4 @@
+
+(BeeForm.py:9210): Gdk-CRITICAL **: gdk_window_invalidate_rect_full: assertion 'GDK_IS_WINDOW (window)' failed
+
+(BeeForm.py:9210): Gdk-CRITICAL **: gdk_window_invalidate_rect_full: assertion 'GDK_IS_WINDOW (window)' failed
