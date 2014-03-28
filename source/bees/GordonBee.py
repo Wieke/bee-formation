@@ -15,7 +15,7 @@ class GordonBee(BaseBee):
         return "Gordon bee"
 
     def comkeys():
-        return ["flag", "phase", "pos"]
+        return ["flag", "phase"]
     
     #Non-static methods
     def __init__(self, args):
@@ -25,8 +25,12 @@ class GordonBee(BaseBee):
         self.destination = None
         self.trans = None
         self.position = None
+        self.swapxy = False
+        self.flipx = False
+        self.flipy = False
     
     def behave(self, perception):
+        
         self.perception = perception
         if self.awake:
             
@@ -62,19 +66,19 @@ class GordonBee(BaseBee):
                     if self.arrived() and self.all_bees_are_here():
                         self.flag = True
                         self.debugInformation = "Arrived at most popular and everyone is here"
+                        if array_equal(most_popular, array([0,1])):
+                            self.swapxy = True
+                        elif array_equal(most_popular, array([0,-1])):
+                            self.swapxy = True
+                            self.flipx = True
+                        elif array_equal(most_popular, array([-1,0])):
+                            self.flipx = True
+                            
+                        self.position = array([1,0])
 
                     if self.flag and self.all_bees_raised_flag():
                         self.phase = 3
-                        self.destination = None
-                        
-                        if most_popular[0] != 0:
-                            self.trans = array([most_popular,[0,1]])
-                        else:
-                            self.trans = array([most_popular,[1,0]])
-
-                        print("most_popular=",most_popular,"\ntrans=",self.trans)
-                                                    
-                        self.position = array([1,0])
+                        self.destination = None 
                         self.debugInformation = "Everyone has raised flag"
 
             elif self.phase == 3:
@@ -96,29 +100,19 @@ class GordonBee(BaseBee):
                     if self.arrived() and self.all_bees_are_here():
                         self.flag = True
                         self.debugInformation = "Arrived at most popular and everyone is here"
+                        self.position = array([1,0])
+                        if most_popular[1] == -1:
+                            self.flipy = True
 
                     if self.flag and self.all_bees_raised_flag():
                         self.phase = 4
                         self.destination = None
-
-                        print(self.trans)
-                        print(most_popular)
-                        if self.trans[0][0] != 0:
-                            self.trans = array([self.trans[0], most_popular])
-                        else:
-                            self.trans = array([self.trans[0], list(reversed(most_popular))])
-                        print(self.trans)
-                            
-                        self.position = array([1,0])
                         self.debugInformation = "Everyone has raised flag"
 
             elif self.phase == 4:
-                """ Move to ordering formation """
-
+                """ Move to ordering formation """   
                 
-                
-                self.destination = array([1,3])
-                
+                self.destination = array([1,3])          
         else:
             if self.sleepCounter <= 0:
                 self.awake = True
@@ -126,37 +120,46 @@ class GordonBee(BaseBee):
             else:
                 self.sleepCounter -= 1
                 
-        return (self.move(), {"flag":self.flag, "phase":self.phase, "pos":str(self.position)})
+        return (self.move().copy(), {"flag":self.flag, "phase":self.phase})
 
     def nr_of_bees_at(self, point):
         """ Returns the number of bees at point """
         """ Responsible for transformations """
-        pos, com = self.perception
+        pos, com, success = self.perception
         
         point = point.copy()
         
         if self.phase == 2:
             point -= self.position
         elif self.phase > 2:
-            point = dot( point - self.position, self.trans)
+            point = self.transform(point - self.position)
 
         return sum(map(lambda x: array_equal(point,x),pos))
 
     def center_of_bees(self):
         """ Return the center of mass of the bees """
-        pos, com = self.perception
+        pos, com, success = self.perception
         return around(sum(pos)/len(pos))
 
     def all_bees_are_here(self):
         """ Returns true if all bees are at the same point. """
-        pos, com = self.perception
+        pos, com, success = self.perception
         return all(map(lambda x: array_equal(x,array([0,0])),pos))
 
     def all_bees_raised_flag(self):
         """ Returns true if all bees have raised their flag"""
-        pos, com = self.perception
+        pos, com, success = self.perception
         return all(map(lambda x: x[1]["flag"], com))
 
+    def all_bees_at_phase(self, phase):
+        """ Returns true if all bees have raised their flag"""
+        pos, com, success = self.perception
+        return all(map(lambda x: x[1]["phase"] == phase, com))
+    
+    def all_bees_lowered_flag(self):
+        """ Returns true if all bees have raised their flag"""
+        pos, com, success = self.perception
+        return all(map(lambda x: not x[1]["flag"], com))
 
     def arrived(self):
         """ Return true if self.destination equals has been reached """
@@ -183,6 +186,26 @@ class GordonBee(BaseBee):
         return list(iterprod(arange(-1*int(y/2),int(y/2)+1),
                              arange(-1*int((x*2-1)/2), int((x*2-1)/2)+1, 2)))
 
+    def transform2(self, p):
+        point = p.copy()
+        if self.swapxy:
+            point = point[::-1]
+        if self.flipx:
+            point[0] = point[0]*-1
+        if self.flipy:
+            point[1] = point[1]*-1
+        return point
+
+    def transform(self, p):
+        point = p.copy()
+        if self.flipx:
+            point[0] = point[0]*-1
+        if self.flipy:
+            point[1] = point[1]*-1
+        if self.swapxy:
+            point = point[::-1]
+        return point
+    
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
         """ Responsible for transformations """
@@ -192,7 +215,7 @@ class GordonBee(BaseBee):
         if self.phase == 2:
             point = self.destination.copy() - self.position
         elif self.phase > 2:
-            point = dot(self.destination.copy() - self.position, self.trans)
+            point = self.transform(self.destination.copy() - self.position)
         else:
             point = self.destination.copy()
         
@@ -207,17 +230,16 @@ class GordonBee(BaseBee):
         else:
             move = array([0,0])
 
-        self.debugInformation  = "destination=" + str(self.destination) +"\npoint=" + str(point)
-        self.debugInformation += "\nposition=" + str(self.position) + "\nmove=" + str(move)
+        self.debugInformation  = "Destination = " + str(self.destination) + "\nPosition = " + str(self.position)
+        self.debugInformation += "\nSwapxy = " + str(self.swapxy) + "\nFlipx = " + str(self.flipx) + "\nFlipy = " + str(self.flipy)
+        self.debugInformation += "\nPoint = " + str(point) + "\nMove = " + str(move) + "\nTransform(Move)= " + str(self.transform(move))
+        self.debugInformation += "\nTransformation = " + str(self.transformation)
 
         if self.phase == 2:
             self.position += move
         elif self.phase > 2:
-            self.position += dot(self.trans, move)
+            self.position += self.transform2(move)
 
-        self.debugInformation += "\nposition=" + str(self.position) + "\ntrans=" + str(self.trans)
-        self.debugInformation += "\ntransformation=" + str(self.transformation)
-        self.debugInformation += "\nOwnCoord=" + str(self.ownCoordinates)
 
         return move
             
