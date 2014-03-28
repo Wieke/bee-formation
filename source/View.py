@@ -95,6 +95,7 @@ class View(object):
 
         if state is not None:
             positions, bees, movement, communication = map(list, zip(*state))
+            movement = [array([0,0]) if x==None else x for x in movement]
             positions = positions + list(map(lambda x: x[0] + x[1], zip(positions, movement)))
             centerofmass = around(sum(positions)/len(positions))
 
@@ -118,7 +119,7 @@ class View(object):
             return
         
         positions, bees, movement, communication = map(list, zip(*state))
-        
+        movement = [array([0,0]) if x==None else x for x in movement]
         width = self.double_buffer.get_width()
         height = self.double_buffer.get_height()
         
@@ -265,32 +266,33 @@ class View(object):
         for pos,_ , move, _ in state:
             x,y = self.f(pos)
 
-            if move[0] != 0 or move[1] != 0:
-            
-                cc.save()
-                cc.translate(x,y)
-                cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
-
-                if array_equal(move, array([-1,0])):
-                    cc.rotate(pi)
-                elif array_equal(move, array([0,1])):
-                    cc.rotate(0.5*pi)
-                elif array_equal(move, array([0,-1])):
-                    cc.rotate(1.5*pi)
+            if move is not None:
+                if move[0] != 0 or move[1] != 0:
                 
-                cc.move_to(0,0)
-                cc.line_to(1,0)
+                    cc.save()
+                    cc.translate(x,y)
+                    cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
 
-                cc.move_to(1,0)
-                cc.line_to(0.7, 0.13)
+                    if array_equal(move, array([-1,0])):
+                        cc.rotate(pi)
+                    elif array_equal(move, array([0,1])):
+                        cc.rotate(0.5*pi)
+                    elif array_equal(move, array([0,-1])):
+                        cc.rotate(1.5*pi)
+                    
+                    cc.move_to(0,0)
+                    cc.line_to(1,0)
 
-                cc.move_to(1,0)
-                cc.line_to(0.7, -0.13)
+                    cc.move_to(1,0)
+                    cc.line_to(0.7, 0.13)
 
-                cc.restore()
-                cc.set_line_width(line_width)
-                cc.set_source_rgb(0, 0, 0)
-                cc.stroke()
+                    cc.move_to(1,0)
+                    cc.line_to(0.7, -0.13)
+
+                    cc.restore()
+                    cc.set_line_width(line_width)
+                    cc.set_source_rgb(0, 0, 0)
+                    cc.stroke()
 
     def drawselection(self,cc,state):
         if self.selectedbee is not None:
