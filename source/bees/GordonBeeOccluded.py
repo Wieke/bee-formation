@@ -6,13 +6,13 @@ from numpy import array, array_equal, around, dot, arange
 from sys import maxsize
 from itertools import product as iterprod
 
-class GordonBee(BaseBee):
+class GordonBeeOccluded(BaseBee):
     #Static methods
     def worldConstraints():
-        return {"occlusion":False, "collision":False, "comrange":0}
+        return {"occlusion":True, "collision":False, "comrange":0}
     
     def name():
-        return "Gordon bee"
+        return "Gordon bee occluded"
 
     def comkeys():
         return ["flag", "phase", "order"]
