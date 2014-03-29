@@ -259,20 +259,19 @@ class GordonBee(BaseBee):
             print("This is not supposed to happen")
             return False
 
-    def generate_order_formation(n):
+    def generate_order_formation(self, n):
         mindist = maxsize
         for i in range(1,n):
             if abs(int(n/i + 1) - (i*2 -1)) < mindist:
                 mindist = abs(int(n/i + 0.5) - (i*2 -1))
             else:
-                y = int(n/(i - 1) + 0.5)
+                y = int(n/(i - 1) + 1)
                 x = i - 1
                 break
 
         l = list(array(x) for x in iterprod(arange(-1*int(y/2),int(y/2)+1),
                                                arange(-1*int((x*2-1)/2), int((x*2-1)/2)+1, 2)))
-        import code
-        code.interact(local=locals())
+
         return l[0:n]
 
     def transform2(self, p):
