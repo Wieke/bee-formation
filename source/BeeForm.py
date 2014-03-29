@@ -20,7 +20,7 @@ class BeeForm(object):
         self.heightofworld = 20
         self.worldseed = 1
         self.selectedbeeclass = None
-        self.runworldinterval = 1
+        self.runworldinterval = (1/3)*1000
         self.running = False
         self.beeclasses = None
         self.world = None
@@ -190,7 +190,7 @@ class BeeForm(object):
         if self.world is not None:
             if not self.running:
                 self.running = True
-                timeout_add_seconds(self.runworldinterval, self.runWorld)
+                timeout_add(self.runworldinterval, self.runWorld)
             else:
                 self.running = False
 
@@ -319,7 +319,7 @@ class BeeForm(object):
                     self.updateComlist()
                     self.updatebeedebug()
                     self.updatetime()
-                timeout_add_seconds(self.runworldinterval, self.runWorld)
+                timeout_add(self.runworldinterval, self.runWorld)
             else:
                 self.startstop()
                 self.logline("Finished in " + str(self.world.timeToFinish) + " seconds!\nEnergy consumed: " + str(self.world.beeSteps) + "\nSpace needed: " + str(self.world.sizeOfWorld))
