@@ -5,6 +5,7 @@ from BaseBee import BaseBee
 from numpy import array, array_equal, around, dot, arange
 from sys import maxsize
 from itertools import product as iterprod
+from math import ceil
 
 class GordonBee(BaseBee):
     #Static methods
