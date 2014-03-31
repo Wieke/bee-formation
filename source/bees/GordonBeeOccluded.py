@@ -5,6 +5,8 @@ from BaseBee import BaseBee
 from numpy import array, array_equal, around, dot, arange
 from sys import maxsize
 from itertools import product as iterprod
+from World import lineofsight
+from math import ceil
 
 class GordonBeeOccluded(BaseBee):
     #Static methods
@@ -31,6 +33,7 @@ class GordonBeeOccluded(BaseBee):
         self.order = None
         self.order_formation = None
         self.time = 0
+        self.nr_of_bees = 0
         
     def behave(self, perception):
         self.time += 1
@@ -45,6 +48,7 @@ class GordonBeeOccluded(BaseBee):
                     
                 if self.arrived() and self.all_bees_are_here():
                     self.flag = True
+                    self.nr_of_bees = len(pos)
                 
                 if self.flag and self.all_bees_raised_flag():
                         self.phase = 2
@@ -124,36 +128,53 @@ class GordonBeeOccluded(BaseBee):
                 self.debugInformation = "Phase 4"
                 
                 if self.order_formation == None:
-                    self.order_formation = self.generate_order_formation(len(pos) + 1)
-                    self.destination = self.empty_position_in_order_formation()
-
-                if self.order is None and self.destination is not None:
-                    if self.arrived():
-                        if self.nr_of_bees_at(self.position) != 0 or self.nr_of_bees_at(self.position + array([0,1])) != 0:
-                            self.destination = self.empty_position_in_order_formation()
-                        elif self.nr_of_bees_at(self.position) == 0 and self.nr_of_bees_at(self.position + array([0,1])) == 0:
-                            self.debugInformation = "Found My Spot"
-                            self.destination = None
-                elif self.destination is None and self.order is None and self.everyone_in_order_formation():
-                    self.destination = self.position + array([0,1])
-                    self.flag = False
-                    for i in range(0,len(self.order_formation)):
-                        if array_equal(self.order_formation[i], self.position):
-                            self.order = i
-                            break
-
-                elif self.order is not None:
-                    if self.everyone_confirmed_order():
+                    self.order_formation = self.generate_order_formation(self.nr_of_bees + 1)
+                    if self.visible_free_spot():
+                        self.destination = self.empty_position_in_order_formation()
+                    else:
                         self.destination = array([0,0])
-                    
-                    if self.arrived() and array_equal(self.position, array([0,0])):
-                        if self.all_bees_are_here():
+                    self.flag = False
+
+                if not self.flag and self.order is None:
+                    if self.arrived() and self.nr_of_bees_at(self.position)==0 and not array_equal(self.position, array([0,0])):
+                        self.flag = True
+                    elif self.nr_of_bees_at(self.destination) > 0 and not array_equal(self.destination, array([0,0])) and self.i_can_see(self.destination):
+                        if self.visible_free_spot():
+                            self.destination = self.empty_position_in_order_formation()
+                        else:
+                            self.destination = array([0,0])
+                    elif self.arrived() and array_equal(self.position, array([0,0])):
+                        if self.visible_free_spot():
+                            self.destination = self.empty_position_in_order_formation()
+                        elif self.everyone_in_order_formation():
+                            self.order = 0
                             self.flag = True
-
-                        if self.flag and (self.all_bees_raised_flag() or self.nr_of_bees_at(self.position)==0):
-                            self.phase = 5
                             self.destination = None
+                elif self.flag and self.order is None:
+                    if self.nr_of_bees_at(self.position) > 0 and self.one_bee_raised_flag():
+                        self.order = 0
+                        for x in self.order_formation:
+                            if array_equal(x,self.position):
+                                break
+                            else:
+                                self.order += 1
+                        self.phase = 5
+                        self.flag = False
+                        self.destination = None
+                elif self.flag and self.order is not None:
+                    if self.destination is None:
+                        self.destination = self.order_formation[self.order]
 
+                    if self.arrived():
+                        if self.nr_of_bees_at(self.position) == 0 or self.all_bees_lowered_flag():
+                            self.order += 1
+                            if len(self.order_formation) > self.order:
+                                self.destination = self.order_formation[self.order]
+                            else:
+                                self.phase = 5
+                                self.flag = False
+                                self.destination = None
+                                
             elif self.phase == 5:
                 if self.destination is None:
                     self.formation = self.normalize(self.formation)
@@ -193,21 +214,15 @@ class GordonBeeOccluded(BaseBee):
         mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
         return [x - mod for x in l]
 
+    def visible_free_spot(self):
+        return len(list(filter(lambda x: self.nr_of_bees_at(x) == 0 and self.i_can_see(x), self.order_formation))) > 0
+
     def everyone_in_order_formation(self):
-        one_at = lambda x: self.nr_of_bees_at(x) == 1 or self.nr_of_bees_at(x+array([0,1])) == 1 or array_equal(x,self.position)
+        one_at = lambda x: self.nr_of_bees_at(x) == 1 or self.nr_of_bees_at(x+array([0,1])) == 1
         return all(map(one_at, self.order_formation))
 
-    def everyone_confirmed_order(self):
-        is_confirmed = lambda x: self.nr_of_bees_at(x + array([0,1])) == 1
-        is_empty = lambda x: self.nr_of_bees_at(x) == 0 and self.nr_of_bees_at(x+array([0,1])) == 0
-        is_origin = lambda x: array_equal(x,array([0,0])) or array_equal(x + array([0,1]),array([0,0]))
-        condition = lambda z: is_confirmed(z) or is_empty(z) or is_origin(z) or array_equal(z,self.position)
-        return all(map(condition, self.order_formation))
-
     def empty_position_in_order_formation(self):
-        return min([ x for x in self.order_formation
-          if (self.nr_of_bees_at(x) == 0 and self.nr_of_bees_at(x + array([0,1])) == 0)],
-                   key=self.distance)
+        return self.generator.choice(list(filter(lambda x: self.nr_of_bees_at(x) == 0 and self.i_can_see(x), self.order_formation)))
 
     def nr_of_bees_at(self, point):
         """ Returns the number of bees at point """
@@ -238,6 +253,16 @@ class GordonBeeOccluded(BaseBee):
         pos, com, success = self.perception
         return all(map(lambda x: x[1]["flag"], com))
 
+    def one_bee_raised_flag(self):
+        """ Returns true if all bees have raised their flag"""
+        pos, com, success = self.perception
+        return any(map(lambda x: x[1]["flag"], com))
+
+    def all_bees_lowered_flag(self):
+        """ Returns true if all bees have raised their flag"""
+        pos, com, success = self.perception
+        return all(map(lambda x: not x[1]["flag"], com))
+
     def all_bees_at_phase(self, phase):
         """ Returns true if all bees have raised their flag"""
         pos, com, success = self.perception
@@ -260,19 +285,22 @@ class GordonBeeOccluded(BaseBee):
             return False
 
     def generate_order_formation(self, n):
-        mindist = maxsize
-        for i in range(1,n):
-            if abs(int(n/i + 0.5) - (i*2 -1)) < mindist:
-                mindist = abs(int(n/i + 0.5) - (i*2 -1))
-            else:
-                y = int(n/(i - 1) + 0.5)
-                x = i - 1
-                break
+        n = n - 1
+        R = ceil(n/4)
+        if R % 2 == 0:
+            R += 1
 
-        l = list(array(x) for x in iterprod(arange(-1*int(y/2),int(y/2)+1),
-                                               arange(-1*int((x*2-1)/2), int((x*2-1)/2)+1, 2)))
+        w = int(R/2) + 1
 
-        return l[0:n]
+        formation = list()
+        
+        for x in arange(-w + 1, w):
+            formation.append(array([x, -w]))
+            formation.append(array([x, w]))
+            formation.append(array([-w, x]))
+            formation.append(array([w, x]))
+
+        return formation[0:n]
 
     def transform2(self, p):
         point = p.copy()
@@ -296,6 +324,18 @@ class GordonBeeOccluded(BaseBee):
 
     def distance(self, p):
         return pow(pow(p[0]-self.position[0],2) + pow(p[1]-self.position[1],2), 0.5)
+
+    def i_can_see(self, point):
+        pos, com, success = self.perception
+        if self.phase == 2:
+            point = point.copy() - self.position
+        elif self.phase > 2:
+            point = self.transform(point.copy() - self.position)
+        else:
+            point = point.copy()
+
+        return lineofsight(point,array([0,0]),pos)
+        
     
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
