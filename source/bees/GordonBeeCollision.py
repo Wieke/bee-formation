@@ -1,4 +1,4 @@
-cimport sys
+import sys
 sys.path.append("..")
 
 from BaseBee import BaseBee
@@ -6,6 +6,7 @@ from numpy import array, array_equal, around, dot, arange
 from sys import maxsize
 from itertools import product as iterprod
 from math import ceil
+from pathfinding import findpathtoclosest
 
 class GordonBeeCollision(BaseBee):
     #Static methods
@@ -311,15 +312,13 @@ class GordonBeeCollision(BaseBee):
             point = self.transform(self.destination.copy() - self.position)
         else:
             point = self.destination.copy()
-        
-        if point[0] > 0:
-            move = array([1,0])
-        elif point[0] < 0:
-            move = array([-1,0])
-        elif point[1] > 0:
-            move = array([0,1])
-        elif point[1] < 0:
-            move = array([0,-1])
+
+        if not array_equal(point, array([0,0])):
+            reachable, path = findpathtoclosest(array([0,0]), point, pos)
+            if len(path) == 0:
+                move = array([0,0])
+            else:
+                move = path[0]
         else:
             move = array([0,0])
 

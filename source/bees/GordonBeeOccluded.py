@@ -6,10 +6,7 @@ from numpy import array, array_equal, around, dot, arange
 from sys import maxsize
 from itertools import product as iterprod
 from World import lineofsight
-<<<<<<< HEAD
-=======
 from math import ceil
->>>>>>> 4ccfee00c211a22f394060fb7f3d5d64ced7f754
 
 class GordonBeeOccluded(BaseBee):
     #Static methods

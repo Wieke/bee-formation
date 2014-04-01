@@ -27,33 +27,34 @@ class Step(object):
     def __gt__(self,other):
         return self.util > other.util
     
-##def findpathtoclosest(start, goal, obstacles):
-##    bounds = getbounds(obstacles, goal)
-##    start = Step(start, distance(start, goal), 0)
-##    goal = Step(goal, None, None)
-##    steps = [start]
-##    i = 0
-##    while i < len(steps) and g not in steps: 
-##        for x in possiblesteps(steps[i],goal,obstacles, bounds):
-##            if x not in steps:
-##                steps.append(x)
-##        i += 1
-##
-##    print(i)
-##    if goal in steps:
-##        return (True, extractpath(goal, steps))
-##    else:
-##        return (False, extractpath(min(steps),steps))
-##
-def findpathtoclosest(start, goal, obstacles):
+def dumbfindpathtoclosest(start, goal, obstacles):
     bounds = getbounds(obstacles, goal)
+    start = Step(start, distance(start, goal), 0)
+    goal = Step(goal, None, None)
+    steps = [start]
+    i = 0
+    while i < len(steps) and goal not in steps: 
+        for x in possiblesteps(steps[i],goal,obstacles, bounds):
+            if x not in steps:
+                steps.append(x)
+        i += 1
+
+    print(i)
+    if goal in steps:
+        return (True, extractpath(goal, steps))
+    else:
+        return (False, extractpath(min(steps),steps))
+
+    
+def findpathtoclosest(start, goal, obstacles):
+    bounds = getbounds(obstacles, goal, start)
     start = Step(start, distance(start, goal), 0)
     goal = Step(goal, None, None)
     steps = {start}
     openable = {start}
     i = 0
     
-    while len(openable) > 0 and g not in steps:
+    while len(openable) > 0 and goal not in steps and i < 15:
         i += 1
         o = min(openable)
         openable.remove(o)
@@ -85,7 +86,7 @@ def extractpath(goal, steps):
     return [ x.pos for x in path[1:]]
         
 
-def getbounds(obstacles, goal):
+def getbounds(obstacles, goal, start):
     minx = obstacles[0][0]
     maxx = obstacles[0][0]
     miny = obstacles[0][1]
@@ -109,6 +110,16 @@ def getbounds(obstacles, goal):
         miny = y
     elif maxy < y:
         maxy = y    
+
+    x,y = start
+    if minx > x:
+        minx = x
+    elif maxx < x:
+        maxx = x
+    if miny > y:
+        miny = y
+    elif maxy < y:
+        maxy = y  
     
     return (minx - 1, maxx + 1, miny - 1, maxy + 1)
 
@@ -123,13 +134,3 @@ def possiblesteps(point, goal, obstacles, bounds):
 
 def distance(p, q):
         return pow(pow(p[0]- q[0],2) + pow(p[1]- q[1],2), 0.5)
-
-
-start = array([0,0])
-goal = array([3,3])
-s = Step(array([0,0]), 4, 0)
-g = Step(array([3,3]), 4, 0)
-obstacles = [array([1,0]), array([2,2]), array([0,1])]
-obstacles2 = [array([1,0]), array([2,2]), array([0,1]), array([2,3]), array([3,4]), array([4,3]), array([4,2]), array([3,1])]
-o = set(map(lambda x: Step(x, 3, 2), obstacles))
-from timeit import timeit
