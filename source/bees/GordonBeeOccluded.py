@@ -32,6 +32,8 @@ class GordonBeeOccluded(BaseBee):
         self.flipy = False
         self.order = None
         self.order_formation = None
+        self.it = False
+        self.stayput = False
         self.time = 0
         self.nr_of_bees = 0
         
@@ -42,6 +44,9 @@ class GordonBeeOccluded(BaseBee):
         if self.awake:
             
             if self.phase == 1:
+                if self.nr_of_bees < len(pos):
+                    self.nr_of_bees = len(pos)
+            
                 """Move towards the center of mass"""
 
                 if not (self.majority_is_here() or self.all_bees_are_here()):
@@ -137,9 +142,11 @@ class GordonBeeOccluded(BaseBee):
                         self.destination = array([0,0])
                     self.flag = False
 
-                if not self.flag and self.order is None:
+                if not self.it and not self.stayput:
                     if self.arrived() and self.nr_of_bees_at(self.position)==0 and not array_equal(self.position, array([0,0])):
-                        self.flag = True
+                        self.stayput = True
+                    elif self.arrived() and self.nr_of_bees_at(self.position) > 0 and self.all_bees_raised_flag():
+                        self.stayput = True
                     elif self.nr_of_bees_at(self.destination) > 0 and not array_equal(self.destination, array([0,0])) and self.i_can_see(self.destination):
                         if self.visible_free_spot():
                             self.destination = self.empty_position_in_order_formation()
@@ -149,10 +156,12 @@ class GordonBeeOccluded(BaseBee):
                         if self.visible_free_spot():
                             self.destination = self.empty_position_in_order_formation()
                         elif self.everyone_in_order_formation():
+                            print("I AM IT")
                             self.order = 0
+                            self.it = True
                             self.flag = True
                             self.destination = None
-                elif self.flag and self.order is None:
+                elif self.stayput:
                     if self.nr_of_bees_at(self.position) > 0 and self.one_bee_raised_flag():
                         self.order = 0
                         for x in self.order_formation:
@@ -161,20 +170,20 @@ class GordonBeeOccluded(BaseBee):
                             else:
                                 self.order += 1
                         self.phase = 5
-                        self.flag = False
+                        self.flag = True
                         self.destination = None
-                elif self.flag and self.order is not None:
+                elif self.it:
                     if self.destination is None:
                         self.destination = self.order_formation[self.order]
                     if self.arrived():
-                        if self.nr_of_bees_at(self.position) == 0 or self.all_bees_lowered_flag():
+                        if self.nr_of_bees_at(self.position) == 0 or self.all_bees_raised_flag():
                             self.order += 1
                             if len(self.order_formation) > self.order:
                                 self.destination = self.order_formation[self.order]
                             else:
                                 self.phase = 5
-                                self.flag = False
                                 self.destination = None
+                            
                                 
             elif self.phase == 5:
                 if self.destination is None:
@@ -332,6 +341,8 @@ class GordonBeeOccluded(BaseBee):
             R += 1
 
         w = int(R/2) + 1
+        if w == 1:
+            w = 2
 
         formation = list()
         
