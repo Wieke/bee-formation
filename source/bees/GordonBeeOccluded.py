@@ -183,7 +183,14 @@ class GordonBeeOccluded(BaseBee):
                             else:
                                 self.phase = 5
                                 self.destination = None
-                            
+                    else:
+                        if self.i_can_see(self.destination) and self.nr_of_bees_at(self.destination) == 0:
+                            self.order += 1
+                            if len(self.order_formation) > self.order:
+                                self.destination = self.order_formation[self.order]
+                            else:
+                                self.phase = 5
+                                self.destination = None
                                 
             elif self.phase == 5:
                 if self.destination is None:
