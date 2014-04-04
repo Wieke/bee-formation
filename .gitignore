@@ -5,6 +5,7 @@ __pycache__/
 # Temporary files
 *.*~
 \#*.*\#
+*.save
 
 # C extensions
 *.so

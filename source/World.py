@@ -6,12 +6,13 @@ import numpy as np
 
 class World(object):
 
-    def __init__(self, beeType, numberOfBees, width, height, args, worldseed):
+    def __init__(self, beeType, numberOfBees, width, height, args, worldseed, lightVersion = False):
         ##INITIAL PARAMETERS##
         self.beeType = beeType
         self.numberOfBees = numberOfBees
         self.constraints = beeType.worldConstraints() #dict("occlusion", "collision", "comrange")
         self.worldGenerator = Random(worldseed)
+        self.lightVersion = lightVersion
         #Parameters that need to be looked at
         self.sleepRate = 0.1
         self.sleepLimit = 10
@@ -21,6 +22,8 @@ class World(object):
          2: np.array([[-1,0],[0,-1]]), 3: np.array([[0,1],[-1,0]])}
 
         ##MEASUREMENTS##
+        self.finished = False
+        self.totalStates = 0
         self.timeToFinish = None
         self.timeToStart = time.clock()
         self.beeSteps = 0
@@ -52,7 +55,6 @@ class World(object):
             shortRangeCom.append(newShortRangeCom)            
 
         #Create the worldstate at t = 0
-        self.totalStates = 0
         self.currentState = 0 
         self.worldStates = [list(zip(beeLocations,listOfBees,globalMovement,shortRangeCom))]
 
@@ -64,7 +66,10 @@ class World(object):
         #Else generate a new state
         else:
             #Retrieve old state
-            oldState = list(zip(*self.worldStates[self.currentState]))
+            if self.lightVersion:
+                oldState = list(zip(*self.worldStates[0]))
+            else:
+                oldState = list(zip(*self.worldStates[self.currentState]))
             oldLocations = list(oldState[0])
             oldMoves = list(oldState[2])
             bees = list(oldState[1])
@@ -120,27 +125,36 @@ class World(object):
             self.worldStates.append(list(zip(locations,bees,globalMovement,newShortRangeComs)))       
             self.totalStates += 1
             self.currentState += 1
+            if self.lightVersion:
+                del self.worldStates[0:len(self.worldStates)-1]
 
             #See if the pattern is formed according to the bees
             if globalMovement.count(None) == len(globalMovement):
                 #timeToFinish is a measurement for the experiment
-                self.timeToFinish = time.clock() - self.timeToStart     
+                self.timeToFinish = time.clock() - self.timeToStart
+                self.finished = True
 
     def stepBackward(self):
         if self.currentState <= 0:
             raise IlligalStateException(-1, self.totalStates)
+        elif self.lightVersion:
+            raise NoHistoryException("stepBackward")
         else:
             self.currentState -= 1
     
     def goToState(self, stateNumber):
         if stateNumber > self.totalStates or stateNumber < 0:
             raise IlligalStateException(stateNumber, self.totalStates)
+        elif self.lightVersion:
+            raise NoHistoryException("goToState")
         else:
             self.currentState = stateNumber    
 
     def getworldState(self):
         if self.worldStates is None:
             return None
+        elif self.lightVersion:
+            return self.worldStates[0]
         else:
             return self.worldStates[self.currentState]
 
@@ -256,4 +270,10 @@ class IlligalStateException(Exception):
         self.totalNumberStates = totalNumberStates
     def __str__(self):
         return "Given state: " + repr(self.enteredState) + " is illigal. Has to be an integer between 0 and " + repr(self.totalNumberStates)
+    
+class NoHistoryException(Exception):
+    def __init__(self, functionName):
+        self.functionName = functionName
+    def __str__(self):
+        return "The following method is not available: " + functionName + " because no history is kept. Set LigthVersion to False to save previous states"
 

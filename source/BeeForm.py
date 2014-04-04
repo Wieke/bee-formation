@@ -312,7 +312,7 @@ class BeeForm(object):
 
     def runWorld(self):
         if self.running:
-            if self.world.timeToFinish == None:
+            if not self.world.finished:
                 if self.world.currentState == self.world.totalStates:
                     self.world.stepForward()
                     self.updateDrawingArea()
@@ -322,7 +322,7 @@ class BeeForm(object):
                 timeout_add(self.runworldinterval, self.runWorld)
             else:
                 self.startstop()
-                self.logline("Finished in " + str(self.world.timeToFinish) + " seconds!\nEnergy consumed: " + str(self.world.beeSteps) + "\nSpace needed: " + str(self.world.sizeOfWorld))
+                self.logline("Finished in " + str(self.world.timeToFinish) + " seconds using " + str(self.world.totalStates) + " states!\nEnergy consumed: " + str(self.world.beeSteps) + "\nSpace needed: " + str(self.world.sizeOfWorld))
 
 if __name__ == '__main__':
     gui = BeeForm()
