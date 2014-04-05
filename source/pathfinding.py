@@ -38,8 +38,7 @@ def dumbfindpathtoclosest(start, goal, obstacles):
             if x not in steps:
                 steps.append(x)
         i += 1
-
-    print(i)
+        
     if goal in steps:
         return (True, extractpath(goal, steps))
     else:
@@ -62,8 +61,7 @@ def findpathtoclosest(start, goal, obstacles):
             if x not in steps:
                 steps.add(x)
                 openable.add(x)
-
-    print(i)
+                
     if goal in steps:
         return (True, extractpath(goal, steps))
     else:

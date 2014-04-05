@@ -36,6 +36,7 @@ class GordonBeeOccluded(BaseBee):
         self.stayput = False
         self.time = 0
         self.nr_of_bees = 0
+        self.countdown = 10
         
     def behave(self, perception):
         self.time += 1
@@ -49,10 +50,12 @@ class GordonBeeOccluded(BaseBee):
             
                 """Move towards the center of mass"""
 
-                if not (self.majority_is_here() or self.all_bees_are_here()):
+                if not (self.majority_is_here() or self.all_bees_are_here()) or self.countdown == 0:
                     self.destination = self.center_of_bees()
+                    self.countdown = 10
                 else:
                     self.destination = None
+                    self.countdown -= 10
 
                 if self.all_bees_are_here():
                     self.flag = True

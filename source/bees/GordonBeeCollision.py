@@ -47,6 +47,8 @@ class GordonBeeCollision(BaseBee):
                     
                 if self.arrived() and self.all_bees_are_here():
                     self.flag = True
+
+                print(self.time, "clsize=",self.all_bees_in_cluster())
                 
                 if self.flag and self.all_bees_raised_flag():
                         self.phase = 6
@@ -195,6 +197,80 @@ class GordonBeeCollision(BaseBee):
         mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
         return [x - mod for x in l]
 
+    def all_bees_in_cluster(self):
+        pos, com, success = self.perception
+        allpos = pos.copy()
+        if self.position is None:
+            allpos.append(array([0,0]))
+        else:
+            allpos.append(self.position.copy())
+        occupied = lambda x,y: any(map(lambda z: z[0] == x and z[0] == y, allpos))
+        x,y = self.destination
+        i = 0
+        total = len(pos)
+
+        while i < total:
+            if x == y and x == 0:
+                if occupied(x,y):
+                    i += 1
+                    x += 1
+                else:
+                    break
+            elif x == y:
+                start = i
+                if occupied(x,x):
+                    i += 1                   
+                if occupied(-x,x):
+                    i += 1
+                if occupied(-x,x):
+                    i += 1
+                if occupied(-x,-x):
+                    i += 1
+                if i - start < 4:
+                    break
+                else:
+                    x += 1
+                    y = 0
+            elif x!=y and y == 0:
+                start = i
+                if occupied(x,0):
+                    i += 1                   
+                if occupied(0,x):
+                    i += 1
+                if occupied(-x,0):
+                    i += 1
+                if occupied(0,-x):
+                    i += 1
+                if i - start < 4:
+                    break
+                else:
+                    y += 1
+            else:
+                start = i
+                if occupied(x,y):
+                    i += 1                   
+                if occupied(x,-y):
+                    i += 1
+                if occupied(-x,y):
+                    i += 1
+                if occupied(-x,-y):
+                    i += 1
+                if occupied(y,x):
+                    i += 1                   
+                if occupied(y,-x):
+                    i += 1
+                if occupied(-y,x):
+                    i += 1
+                if occupied(-y,-x):
+                    i += 1
+                if i - start < 8:
+                    break
+                else:
+                    y += 1
+
+        return i
+        
+
     def everyone_in_order_formation(self):
         one_at = lambda x: self.nr_of_bees_at(x) == 1 or self.nr_of_bees_at(x+array([0,1])) == 1 or array_equal(x,self.position)
         return all(map(one_at, self.order_formation))
@@ -228,7 +304,7 @@ class GordonBeeCollision(BaseBee):
     def center_of_bees(self):
         """ Return the center of mass of the bees """
         pos, com, success = self.perception
-        return around(sum(pos)/len(pos))
+        return around(sum(pos)/(len(pos) + 1))
 
     def all_bees_are_here(self):
         """ Returns true if all bees are at the same point. """
@@ -298,6 +374,30 @@ class GordonBeeCollision(BaseBee):
 
     def distance(self, p):
         return pow(pow(p[0]-self.position[0],2) + pow(p[1]-self.position[1],2), 0.5)
+
+    def cluster_radius(n):
+        width = int(pow(n,0.5))
+
+        if width % 2 == 0:
+            width -= 1
+        
+        leftover = n - pow(width, 2)
+        x = (width -1) / 2
+
+        if leftover == 0:
+            y = x
+        elif leftover <= 4:
+            x += 1
+            y = 0
+        elif ((4*(width + 2) - 4) - leftover) < 4:
+            x += 1
+            y = x
+        else:
+            x += 1
+            y = ceil(leftover / 8) - 1
+        
+        distance = pow(pow(x, 2) + pow(y,2), 0.5)
+        return (leftover, x, y, distance)
     
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
@@ -329,6 +429,3 @@ class GordonBeeCollision(BaseBee):
 
 
         return move
-            
-
- 
