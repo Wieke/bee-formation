@@ -42,10 +42,16 @@ def dumbfindpathtoclosest(start, goal, obstacles):
     if goal in steps:
         return (True, extractpath(goal, steps))
     else:
-        return (False, extractpath(min(steps),steps))
+        minutil = min(steps).util
+        closest_to_target = [x for x in steps if x.util == minutil]
+        closest_to_me = min(closest_to_target,
+                            key=lambda x: distance(start.pos,x.pos))
+        return (False, extractpath(closest_to_me,steps))
 
     
 def findpathtoclosest(start, goal, obstacles):
+    if array_equal(start,goal):
+        return (True, [])
     bounds = getbounds(obstacles, goal, start)
     start = Step(start, distance(start, goal), 0)
     goal = Step(goal, None, None)
@@ -65,7 +71,11 @@ def findpathtoclosest(start, goal, obstacles):
     if goal in steps:
         return (True, extractpath(goal, steps))
     else:
-        return (False, extractpath(min(steps),steps))
+        minutil = min(steps).util
+        closest_to_target = [x for x in steps if x.util == minutil]
+        closest_to_me = min(closest_to_target,
+                            key=lambda x: distance(start.pos,x.pos))
+        return (False, extractpath(closest_to_me,steps))
 
 def extractpath(goal, steps):
     for s in steps:

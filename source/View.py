@@ -27,8 +27,12 @@ class View(object):
             
             if self.world is not None:
                 state = self.world.getworldState()
+                if self.selectedbee is not None:
+                    self.selectedbee.selected = False
                 if state is not None:
                     self.selectedbee = next((x[1] for x in state if array_equal(x[0],pos)), None)
+                    if self.selectedbee is not None:
+                        self.selectedbee.selected = True
             elif self.main.beearguments is not None:
                 if "formation" in self.main.beearguments:
                     f = self.main.beearguments["formation"]

@@ -44,6 +44,9 @@ class BaseBee:
         """List of formation positions"""
         self.formation = args["formation"]
 
+        """Boolean that indicates if the bee is selected in the View for debugging purposes"""
+        self.selected = False
+
     def behave(self, perception):
         """Return (Numpy.Array([xmovement, ymovement]), Dict(shortRangeComm))"""
         raise NotImplementedError("Please Implement this method")

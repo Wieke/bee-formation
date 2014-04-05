@@ -33,11 +33,21 @@ class GordonBeeCollision(BaseBee):
         self.order = None
         self.order_formation = None
         self.time = 0
+        self.cluster_radius = None
+        self.lastmove = None
+        self.closest_i_could_get = None
         
     def behave(self, perception):
         self.time += 1
         self.perception = perception
         pos, com, success = self.perception
+
+        if self.lastmove is not None and self.position is not None and success:
+            if self.phase == 2:
+                self.position += self.lastmove
+            elif self.phase > 2:
+                self.position += self.transform2(self.lastmove)
+        
         if self.awake:
             
             if self.phase == 1:
@@ -45,21 +55,19 @@ class GordonBeeCollision(BaseBee):
 
                 self.destination = self.center_of_bees()
                     
-                if self.arrived() and self.all_bees_are_here():
+                if self.arrived() and self.all_bees_in_cluster(self.destination):
                     self.flag = True
-
-                print(self.time, "clsize=",self.all_bees_in_cluster())
                 
                 if self.flag and self.all_bees_raised_flag():
-                        self.phase = 6
-                        self.destination = None
-                        self.position = array([0,0])
+                    self.phase = 6
+                    self.destination = None
+                    self.position = array([0,0])
                         
             elif self.phase == 2:
                 """Move towards most popular [1,0]"""
 
                 if self.destination is None:
-                    self.destination = array([1,0])
+                    self.destination = array([int(self.cluster_radius*3),0])
                     self.flag = False
                     self.debugInformation = "Moving to 1,0"
                     
@@ -167,7 +175,8 @@ class GordonBeeCollision(BaseBee):
                         self.phase = 6
 
             elif self.phase == 6:
-                return (None, {"flag":self.flag, "phase":self.phase, "order":self.order})
+                self.lastmove = None
+                return (self.lastmove, {"flag":self.flag, "phase":self.phase, "order":self.order})
                 
         else:
             if self.sleepCounter <= 0:
@@ -175,8 +184,9 @@ class GordonBeeCollision(BaseBee):
                 self.sleepCounter = 0
             else:
                 self.sleepCounter -= 1
-                
-        return (self.move().copy(), {"flag":self.flag, "phase":self.phase, "order":self.order})
+
+        self.lastmove = self.move().copy()
+        return (self.lastmove, {"flag":self.flag, "phase":self.phase, "order":self.order})
 
     def normalize(self, l):
         minx = l[0][0]
@@ -197,79 +207,14 @@ class GordonBeeCollision(BaseBee):
         mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
         return [x - mod for x in l]
 
-    def all_bees_in_cluster(self):
+    def all_bees_in_cluster(self, cluster_position):
         pos, com, success = self.perception
-        allpos = pos.copy()
-        if self.position is None:
-            allpos.append(array([0,0]))
-        else:
-            allpos.append(self.position.copy())
-        occupied = lambda x,y: any(map(lambda z: z[0] == x and z[0] == y, allpos))
-        x,y = self.destination
-        i = 0
-        total = len(pos)
+        if self.cluster_radius is None:
+            self.cluster_radius = GordonBeeCollision.calculate_cluster_radius(len(pos) + 1)
 
-        while i < total:
-            if x == y and x == 0:
-                if occupied(x,y):
-                    i += 1
-                    x += 1
-                else:
-                    break
-            elif x == y:
-                start = i
-                if occupied(x,x):
-                    i += 1                   
-                if occupied(-x,x):
-                    i += 1
-                if occupied(-x,x):
-                    i += 1
-                if occupied(-x,-x):
-                    i += 1
-                if i - start < 4:
-                    break
-                else:
-                    x += 1
-                    y = 0
-            elif x!=y and y == 0:
-                start = i
-                if occupied(x,0):
-                    i += 1                   
-                if occupied(0,x):
-                    i += 1
-                if occupied(-x,0):
-                    i += 1
-                if occupied(0,-x):
-                    i += 1
-                if i - start < 4:
-                    break
-                else:
-                    y += 1
-            else:
-                start = i
-                if occupied(x,y):
-                    i += 1                   
-                if occupied(x,-y):
-                    i += 1
-                if occupied(-x,y):
-                    i += 1
-                if occupied(-x,-y):
-                    i += 1
-                if occupied(y,x):
-                    i += 1                   
-                if occupied(y,-x):
-                    i += 1
-                if occupied(-y,x):
-                    i += 1
-                if occupied(-y,-x):
-                    i += 1
-                if i - start < 8:
-                    break
-                else:
-                    y += 1
+        within_radius = lambda x: self.distance(x, cluster_position) <= self.cluster_radius
 
-        return i
-        
+        return all(map(within_radius, pos)) and within_radius(array([0,0]))        
 
     def everyone_in_order_formation(self):
         one_at = lambda x: self.nr_of_bees_at(x) == 1 or self.nr_of_bees_at(x+array([0,1])) == 1 or array_equal(x,self.position)
@@ -329,10 +274,22 @@ class GordonBeeCollision(BaseBee):
     def arrived(self):
         """ Return true if self.destination equals has been reached """
         """ Responsible for transformations """
+
+        if self.selected and not self.flag:
+            import code
+            code.interact(local=locals())
+
+            
         if self.phase == 1:
-            return array_equal(self.destination, array([0,0]))
+            if self.closest_i_could_get is not None:
+                return array_equal(self.closest_i_could_get, array([0,0]))
+            else:            
+                return array_equal(self.destination, array([0,0]))
         elif self.phase > 1:
-            return array_equal(self.destination, self.position)
+            if self.closest_i_could_get is not None:
+                return array_equal(self.closest_i_could_get, self.position)
+            else:            
+                return array_equal(self.destination, self.position)
         else:
             print("This is not supposed to happen")
             return False
@@ -372,10 +329,12 @@ class GordonBeeCollision(BaseBee):
             point = point[::-1]
         return point
 
-    def distance(self, p):
-        return pow(pow(p[0]-self.position[0],2) + pow(p[1]-self.position[1],2), 0.5)
+    def distance(self, p, q=None):
+        if q is None:
+            q = self.position
+        return pow(pow(p[0]-q[0],2) + pow(p[1]-q[1],2), 0.5)
 
-    def cluster_radius(n):
+    def calculate_cluster_radius(n):
         width = int(pow(n,0.5))
 
         if width % 2 == 0:
@@ -397,7 +356,7 @@ class GordonBeeCollision(BaseBee):
             y = ceil(leftover / 8) - 1
         
         distance = pow(pow(x, 2) + pow(y,2), 0.5)
-        return (leftover, x, y, distance)
+        return distance
     
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
@@ -419,13 +378,21 @@ class GordonBeeCollision(BaseBee):
                 move = array([0,0])
             else:
                 move = path[0]
+            if not reachable and not array_equal(move,array([0,0])):
+                if self.phase == 2:
+                    self.closest_i_could_get = path[-1] + self.position
+                elif self.phase > 2:
+                    self.closest_i_could_get = self.transform2(path[-1]) + self.position
+                else:
+                    self.closest_i_could_get = path[-1]
+            elif not reachable:
+                if self.phase > 1:
+                    self.closest_i_could_get = self.position
+                else:
+                    self.closest_i_could_get = array([0,0])
+            else:
+                self.closest_i_could_get = None
         else:
             move = array([0,0])
-
-        if self.phase == 2:
-            self.position += move
-        elif self.phase > 2:
-            self.position += self.transform2(move)
-
 
         return move
