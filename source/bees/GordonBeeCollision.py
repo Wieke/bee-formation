@@ -17,12 +17,12 @@ class GordonBeeCollision(BaseBee):
         return "Gordon bee collision"
 
     def comkeys():
-        return ["flag", "phase", "confirmation", "order"]
+        return ["flag", "phase","order"]
     
     #Non-static methods
     def __init__(self, args):
         BaseBee.__init__(self, args)
-        self.flag = False
+        self.flag = 0
         self.phase = 1
         self.destination = None
         self.trans = None
@@ -42,6 +42,14 @@ class GordonBeeCollision(BaseBee):
         self.perception = perception
         pos, com, success = self.perception
 
+        if self.selected:
+            print("flag", self.flag)
+            print("arrived", self.arrived())
+            print("all_bees_in_cluster",self.all_bees_in_cluster(self.destination))
+
+        if self.cluster_radius is None:
+            self.cluster_radius = calculate_cluster_radius(len(pos) + 1)
+
         if self.lastmove is not None and self.position is not None and success:
             if self.phase == 2:
                 self.position += self.lastmove
@@ -53,15 +61,24 @@ class GordonBeeCollision(BaseBee):
             if self.phase == 1:
                 """Move towards the center of mass"""
 
-                self.destination = self.center_of_bees()
+                if self.flag > 0:
+                    self.update_flag()
                     
-                if self.arrived() and self.all_bees_in_cluster(self.destination):
-                    self.flag = True
+                self.destination = self.center_of_bees()                    
+                
+                if self.arrived() and self.all_bees_in_cluster(self.destination) and self.position is None:
+                    self.update_flag()
+                    self.position = array([0,0]) - self.destination
+                    print(self.position)
+
+                if self.all_bees_in_cluster(self.destination) and not self.any_bee_raised_flag():
+                    self.update_flag()
+                else:
+                    self.flag = 0
                 
                 if self.flag and self.all_bees_raised_flag():
                     self.phase = 6
                     self.destination = None
-                    self.position = array([0,0])
                         
             elif self.phase == 2:
                 """Move towards most popular [1,0]"""
@@ -69,35 +86,35 @@ class GordonBeeCollision(BaseBee):
                 if self.destination is None:
                     self.destination = array([int(self.cluster_radius*3),0])
                     self.flag = False
-                    self.debugInformation = "Moving to 1,0"
+                    self.debugInformation = "Moving to 3*cluster_radius,0"
                     
-                if self.arrived() and (self.nr_of_bees_at(array([0,0])) == 0 or self.flag):
-                    self.debugInformation = "Arrived and 0,0 is empty"
-                    direction = [array([0,1]), array([1,0]), array([0,-1]), array([-1,0])]
-                    
-                    most_popular = max(direction, key = self.nr_of_bees_at)
-
-                    self.destination = most_popular    
-
-                    if self.arrived() and self.all_bees_are_here():
-                        self.flag = True
-                        self.debugInformation = "Arrived at most popular and everyone is here"
-
-                    if self.flag and (self.all_bees_raised_flag() or self.nr_of_bees_at(self.position)==0):
-                        self.phase = 3
-                        self.destination = None 
-                        self.debugInformation = "Everyone has raised flag"
-
-                        most_popular = self.position
-                        if array_equal(most_popular, array([0,1])):
-                            self.swapxy = True
-                        elif array_equal(most_popular, array([0,-1])):
-                            self.swapxy = True
-                            self.flipx = True
-                        elif array_equal(most_popular, array([-1,0])):
-                            self.flipx = True
-                            
-                        self.position = array([1,0])
+##                if self.arrived() and (self.nr_of_bees_at(array([0,0])) == 0 or self.flag):
+##                    self.debugInformation = "Arrived and 0,0 is empty"
+##                    direction = [array([0,1]), array([1,0]), array([0,-1]), array([-1,0])]
+##                    
+##                    most_popular = max(direction, key = self.nr_of_bees_at)
+##
+##                    self.destination = most_popular    
+##
+##                    if self.arrived() and self.all_bees_are_here():
+##                        self.flag = True
+##                        self.debugInformation = "Arrived at most popular and everyone is here"
+##
+##                    if self.flag and (self.all_bees_raised_flag() or self.nr_of_bees_at(self.position)==0):
+##                        self.phase = 3
+##                        self.destination = None 
+##                        self.debugInformation = "Everyone has raised flag"
+##
+##                        most_popular = self.position
+##                        if array_equal(most_popular, array([0,1])):
+##                            self.swapxy = True
+##                        elif array_equal(most_popular, array([0,-1])):
+##                            self.swapxy = True
+##                            self.flipx = True
+##                        elif array_equal(most_popular, array([-1,0])):
+##                            self.flipx = True
+##                            
+##                        self.position = array([1,0])
 
 
             elif self.phase == 3:
@@ -176,7 +193,7 @@ class GordonBeeCollision(BaseBee):
 
             elif self.phase == 6:
                 self.lastmove = None
-                return (self.lastmove, {"flag":self.flag, "phase":self.phase, "order":self.order})
+                return (self.lastmove, {"flag":self.flag, "phase":self.phase,"order":self.order})
                 
         else:
             if self.sleepCounter <= 0:
@@ -186,7 +203,7 @@ class GordonBeeCollision(BaseBee):
                 self.sleepCounter -= 1
 
         self.lastmove = self.move().copy()
-        return (self.lastmove, {"flag":self.flag, "phase":self.phase, "order":self.order})
+        return (self.lastmove, {"flag":self.flag, "phase":self.phase,"order":self.order})
 
     def normalize(self, l):
         minx = l[0][0]
@@ -207,15 +224,56 @@ class GordonBeeCollision(BaseBee):
         mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
         return [x - mod for x in l]
 
+    def count_cluster_size_at(self, cluster_position):
+        pos = self.perception[0].copy()
+        pos.append(array([0,0]))
+        
+        if self.phase == 2:
+            point = cluster_position.copy() - self.position
+        elif self.phase > 2:
+            point = self.transform(cluster_position.copy() - self.position)
+        else:
+            point = cluster_position.copy()
+
+        x, y = 0,0
+
+        pos = [x - point for x in pos]
+        
+        count = 0
+        
+        while len(pos) > 0:
+
+            if x == y and y == 0:
+                positions_to_check = [(x,x)]
+            elif x == y:
+                positions_to_check = [(x,x),(x,-x),(-x,x),(-x,-x)]
+            elif y == 0:
+                positions_to_check = [(x,0),(-x,0),(0,x),(0,-x)]
+            else:
+                positions_to_check = [(x,y),(x,-y),(-x,y),(-x,-y),(y,x),(y,-x),(-y,x),(-y,-x)]
+
+
+            indices = list(map(lambda a: find_by_array(pos, a), positions_to_check))
+            count += sum(map(lambda a: a is not None, indices))
+            if all(map(lambda a: a is not None, indices)):
+                for i in reversed(sorted(indices)):
+                    del pos[i]
+            else:
+                return count           
+
+            if x == y:
+                x += 1
+                y = 0              
+            else:
+                y += 1
+
+        return count
+
+
     def all_bees_in_cluster(self, cluster_position):
         pos, com, success = self.perception
-        if self.cluster_radius is None:
-            self.cluster_radius = GordonBeeCollision.calculate_cluster_radius(len(pos) + 1)
-
-        within_radius = lambda x: self.distance(x, cluster_position) <= self.cluster_radius
-
-        return all(map(within_radius, pos)) and within_radius(array([0,0]))        
-
+        return self.count_cluster_size_at(cluster_position) == (len(pos)+1)   
+    
     def everyone_in_order_formation(self):
         one_at = lambda x: self.nr_of_bees_at(x) == 1 or self.nr_of_bees_at(x+array([0,1])) == 1 or array_equal(x,self.position)
         return all(map(one_at, self.order_formation))
@@ -253,32 +311,33 @@ class GordonBeeCollision(BaseBee):
 
     def all_bees_are_here(self):
         """ Returns true if all bees are at the same point. """
+        return False
+
+    def update_flag(self):
         pos, com, success = self.perception
-        return all(map(lambda x: array_equal(x,array([0,0])),pos))
+        self.flag = 5 - len(com) + sum(map(lambda x: x[1]["flag"] > 0, com))
+        
 
     def all_bees_raised_flag(self):
         """ Returns true if all bees have raised their flag"""
         pos, com, success = self.perception
-        return all(map(lambda x: x[1]["flag"], com))
+        if len(pos) > 0:
+            return all(map(lambda x: x[1]["flag"] == 5, com))
+        else:
+            return True
 
-    def all_bees_at_phase(self, phase):
-        """ Returns true if all bees have raised their flag"""
+    def any_bee_raised_flag(self):
         pos, com, success = self.perception
-        return all(map(lambda x: x[1]["phase"] == phase, com))
+        return any(map(lambda x: x[1]["flag"] == 5 if x[1] is not None else False, com))
     
     def all_bees_lowered_flag(self):
         """ Returns true if all bees have raised their flag"""
         pos, com, success = self.perception
-        return all(map(lambda x: not x[1]["flag"], com))
+        return all(map(lambda x: x[1]["flag"] == 0, com))
 
     def arrived(self):
         """ Return true if self.destination equals has been reached """
         """ Responsible for transformations """
-
-        if self.selected and not self.flag:
-            import code
-            code.interact(local=locals())
-
             
         if self.phase == 1:
             if self.closest_i_could_get is not None:
@@ -333,30 +392,6 @@ class GordonBeeCollision(BaseBee):
         if q is None:
             q = self.position
         return pow(pow(p[0]-q[0],2) + pow(p[1]-q[1],2), 0.5)
-
-    def calculate_cluster_radius(n):
-        width = int(pow(n,0.5))
-
-        if width % 2 == 0:
-            width -= 1
-        
-        leftover = n - pow(width, 2)
-        x = (width -1) / 2
-
-        if leftover == 0:
-            y = x
-        elif leftover <= 4:
-            x += 1
-            y = 0
-        elif ((4*(width + 2) - 4) - leftover) < 4:
-            x += 1
-            y = x
-        else:
-            x += 1
-            y = ceil(leftover / 8) - 1
-        
-        distance = pow(pow(x, 2) + pow(y,2), 0.5)
-        return distance
     
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
@@ -394,5 +429,40 @@ class GordonBeeCollision(BaseBee):
                 self.closest_i_could_get = None
         else:
             move = array([0,0])
+            self.closest_i_could_get = None
 
         return move
+
+
+### Static Functions ###
+
+    
+def find_by_array(l, a):
+    for i in range(0,len(l)):
+        if l[i][0] == a[0] and l[i][1] == a[1]:
+            return i
+    return None
+
+def calculate_cluster_radius(n):
+    width = int(pow(n,0.5))
+
+    if width % 2 == 0:
+        width -= 1
+    
+    leftover = n - pow(width, 2)
+    x = (width -1) / 2
+
+    if leftover == 0:
+        y = x
+    elif leftover <= 4:
+        x += 1
+        y = 0
+    elif ((4*(width + 2) - 4) - leftover) < 4:
+        x += 1
+        y = x
+    else:
+        x += 1
+        y = ceil((leftover - 4) / 8)
+    
+    distance = pow(pow(x, 2) + pow(y,2), 0.5)
+    return distance
