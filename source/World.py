@@ -94,8 +94,8 @@ class World(object):
                 collisions = findCollisions(locations)
                 while(len(collisions) != 0):
                     for collision in findCollisions(locations):
-                        if np.array_equal(oldLocations[collision], locations[collision]):
-                            feedback[collision] = False
+                        if not np.array_equal(oldLocations[collision], locations[collision]):
+                            feedback[collision] = True
                             self.beeSteps += 1 #every mistake is an additional penalty
                         locations[collision] = oldLocations[collision]
                     collisions = findCollisions(locations)
