@@ -87,7 +87,7 @@ def extractpath(goal, steps):
     is_adjacent = lambda x: distance(current.pos,x.pos) == 1.0
     condition = lambda x: less_order(x) and is_adjacent(x)
     while current.ord > 0:
-        current = filter(condition, steps).__next__()
+        current = min(filter(condition, steps), key=lambda x: distance(goal.pos,x.pos))
         path.append(current)
 
     path.reverse()
