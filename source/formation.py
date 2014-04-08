@@ -2,7 +2,7 @@ from numpy import array, array_equal,ones,arange,zeros,amax
 from itertools import product as iterprod
 
 def buildorder(formation):
-    ## Determining formation bounds ##
+    """ Determine bounds of formation """
     minx = formation[0][0]
     maxx = formation[0][0]
     miny = formation[0][1]
@@ -17,18 +17,24 @@ def buildorder(formation):
         elif maxy < y:
             maxy = y
 
-    ## Creating arrays ##
+    """ Create Required Arrays """
+    """ Both arrays are 2 larger than te formation requires"""
     field = ones((maxx - minx + 3, maxy - miny + 3))
     form = zeros((maxx - minx + 3, maxy - miny + 3))
     fmaxx, fmaxy = field.shape
 
+    """ Filling array with truth values according to formation """
     for x,y in map(lambda x: x - array([minx - 1,miny - 1]), formation):
         form[x,y] = 1
 
     form = form == 1
 
+    """ Paint-like fill operation on 0,0, sets them at 0 """
     field = fill(field, form)
 
+    """ Will perform a reduction operation on each square with value of target"""
+    """ It will add 1 to the square if all it's neighbors also have the value of target"""
+    """ This results in a height/distance-from-border map type situation"""
     target = 0
     while target != amax(field):
         target += 1
@@ -37,17 +43,19 @@ def buildorder(formation):
     m = amax(field)
 
     outformation = []
-    
+
+    """ Recreates formation as a tuple of coordinates and the height/distance"""
     for i in iterprod(arange(0,field.shape[0]),arange(0,field.shape[1])):
         if form[i]:
             outformation.append((m - field[i],array(i)))
 
+    """ Sorts the order based on lexicographical ordering and height/distance"""
     outformation = sorted(outformation, key=lambda x: x[1][0] + x[1][1]*fmaxx + x[0]*fmaxx*fmaxy)
-    
-    return [x[1] + array([minx -1, miny -1]) for x in outformation]
+
+    """ Restore Origin"""
+    return [(x[0], x[1] + array([minx -1, miny -1])) for x in outformation]
 
 def printbuildorder(formation):
-    ## Determining formation bounds ##
     minx = formation[0][0]
     maxx = formation[0][0]
     miny = formation[0][1]
@@ -62,7 +70,6 @@ def printbuildorder(formation):
         elif maxy < y:
             maxy = y
 
-    ## Creating arrays ##
     order = zeros((maxx - minx + 3, maxy - miny + 3))
 
     i = 1

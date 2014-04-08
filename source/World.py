@@ -177,8 +177,8 @@ class World(object):
             #Without occlusion all the other agents can be seen
             accesLocations = list(map(lambda a: np.dot(bee.transformation,(a-ownLocation))+bee.ownCoordinates , otherLocations))
 
-        accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs, bee) 
-        
+        accesShortRangeComs = self._accesableShortRangeCommunication(ownLocation,otherLocations, othershortRangeComs, bee)
+    
         return (accesLocations, accesShortRangeComs, feedback[index])
 
     def _accesableShortRangeCommunication(self, ownLocation, otherLocations, othershortRangeComs, bee):

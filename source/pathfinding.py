@@ -55,8 +55,8 @@ def findpathtoclosest(start, goal, obstacles):
     bounds = getbounds(obstacles, goal, start)
     start = Step(start, distance(start, goal), 0)
     goal = Step(goal, None, None)
-    steps = {start}
-    openable = {start}
+    steps = [start]
+    openable = [start]
     i = 0
     
     while len(openable) > 0 and goal not in steps and i < 15:
@@ -65,8 +65,8 @@ def findpathtoclosest(start, goal, obstacles):
         openable.remove(o)
         for x in possiblesteps(o, goal, obstacles, bounds):
             if x not in steps:
-                steps.add(x)
-                openable.add(x)
+                steps.append(x)
+                openable.append(x)
                 
     if goal in steps:
         return (True, extractpath(goal, steps))

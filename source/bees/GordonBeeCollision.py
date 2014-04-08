@@ -7,6 +7,7 @@ from sys import maxsize
 from itertools import product as iterprod
 from math import ceil
 from pathfinding import findpathtoclosest
+from formation import buildorder
 
 class GordonBeeCollision(BaseBee):
     #Static methods
@@ -17,26 +18,29 @@ class GordonBeeCollision(BaseBee):
         return "Gordon bee collision"
 
     def comkeys():
-        return ["flag", "phase","order","position" ,"move"]
+        return ["flag", "consensus", "phase","order"]
     
     #Non-static methods
     def __init__(self, args):
         BaseBee.__init__(self, args)
-        self.flag = 0
+        self.flag = False
         self.phase = 1
         self.destination = None
-        self.trans = None
         self.position = None
         self.swapxy = False
         self.flipx = False
         self.flipy = False
         self.order = None
-        self.order_formation = None
         self.time = 0
         self.cluster_radius = None
         self.lastmove = None
         self.closest_i_could_get = None
         self.nr_of_possible_neighbors = 8
+        self.proper_formation = None
+        self.nr_neighbors_flag_raised = 0
+        self.internal_flag = False
+        self.consensus = False
+        self.center_of_cluster = None
         
     def behave(self, perception):
         self.time += 1
@@ -52,158 +56,145 @@ class GordonBeeCollision(BaseBee):
             elif self.phase > 2:
                 self.position += self.transform2(self.lastmove)
             self.lastmove = None
-
         
         if self.awake:
-
             if self.phase == 1:
                 """Move towards the center of mass"""
 
-                if self.flag > 0:
-                    self.update_flag()
+                if self.internal_flag:
+                    self.update_flags()                
 
-                if self.flag == 0:
+                if not self.internal_flag:
                     if self.arrived() and self.all_bees_in_cluster(self.destination) and self.position is None:
-                        self.update_flag()
+                        self.update_flags(self.destination)
                         self.position = array([0,0]) - self.destination
                     else:
                         self.set_destination(self.center_of_bees())
                 else:
                     self.set_destination(None)
                 
-                if self.flag and self.all_bees_raised_flag():
+                if self.consensus_reached() and self.internal_flag and len(com) < 8:
                     self.phase = 2
                     self.set_destination(None)
+                    self.internal_flag = False
+
+                if self.time > 180 and not self.consensus:
+                    import code
+                    code.interact(local=locals())
                                             
             elif self.phase == 2:
                 """Move towards most popular [1,0]"""
-                d = int(self.cluster_radius*3) + 1 
-                if self.destination is None:
+                d = int(self.cluster_radius*3) + 1
+                direction = [array([0,d]), array([d,0]), array([0,-d]), array([-d,0])]
+                if self.destination is None and not self.internal_flag:
                     self.set_destination(array([d,0]))
-                    self.flag = 0
                     self.debugInformation = "Moving to 3*cluster_radius,0"
+                    self.lower_flags()
 
-                if self.flag > 0:
-                    self.update_flag()
+                if self.internal_flag:
+                    self.update_flags()
 
-                if self.arrived() and self.any_bee_raised_flag():
-                    self.update_flag()
-                    
-                if self.arrived() and (self.count_cluster_size_at(array([0,0])) == 0 or self.flag > 0):
-                    self.debugInformation = "Arrived and 0,0 is empty"
-                    direction = [array([0,d]), array([d,0]), array([0,-d]), array([-d,0])]
-                    
+                if self.arrived() and (self.count_cluster_size_at(array([0,0])) == 0 or self.internal_flag):
+                    self.debugInformation = "Arrived and 0,0 is empty"                    
                     most_popular = max(direction, key = self.count_cluster_size_at)
 
-                    self.set_destination(most_popular)
+                    if not self.internal_flag:
+                        self.set_destination(most_popular)
+                    else:
+                        self.set_destination(None)
 
-                    if self.arrived() and self.all_bees_in_cluster(self.destination):
-                        self.update_flag()
+                    if self.arrived() and self.all_bees_in_cluster(self.destination) and not self.internal_flag:
+                        self.update_flags(self.destination)
                         self.debugInformation = "Arrived at most popular and everyone is here"
 
-                    if self.flag > 0 and self.all_bees_raised_flag():
-                        self.phase = 3
-                        self.set_destination(None)
-                        self.debugInformation = "Everyone has raised flag"
+                if self.consensus_reached() and self.internal_flag and len(com) < 8:
+                    self.phase = 3
+                    self.set_destination(None)
+                    self.debugInformation = "Everyone has raised flag"
+                    self.internal_flag = False
 
-                        most_popular = min(direction, key=self.distance)
-                        
-                        if array_equal(most_popular, array([0,d])):
-                            self.swapxy = True
-                            self.position = array([self.position[1],self.position[0]])
-                        elif array_equal(most_popular, array([0,-d])):
-                            self.swapxy = True
-                            self.flipx = True
-                            self.position = array([-self.position[1],self.position[0]])
-                        elif array_equal(most_popular, array([-d,0])):
-                            self.flipx = True
-                            self.position = array([-self.position[0],self.position[1]])
+                    most_popular = min(direction, key=self.distance)
+                    
+                    if array_equal(most_popular, array([0,d])):
+                        self.swapxy = True
+                        self.position = array([self.position[1],self.position[0]])
+                    elif array_equal(most_popular, array([0,-d])):
+                        self.swapxy = True
+                        self.flipx = True
+                        self.position = array([-self.position[1],self.position[0]])
+                    elif array_equal(most_popular, array([-d,0])):
+                        self.flipx = True
+                        self.position = array([-self.position[0],self.position[1]])
 
 
             elif self.phase == 3:
                 """Move towards most popular [0,1]"""
-                d = int(self.cluster_radius*3) + 1 
-                if self.destination is None:
+                d = int(self.cluster_radius*3) + 1
+                direction = [array([0,d]), array([0,-d])]
+                if self.destination is None and not self.internal_flag:
                     self.set_destination(array([0,d]))
-                    self.flag = 0
                     self.debugInformation = "Moving to 0,1"
+                    self.lower_flags()
 
-                if self.flag > 0:
-                    self.update_flag()
-
-                if self.arrived() and self.any_bee_raised_flag() and self.distance(array([d,0])) < min(self.distance(array([0,d])),self.distance(array([0,-d]))):
-                    self.update_flag()
+                if self.internal_flag:
+                    self.update_flags()
                     
-                if self.arrived() and (self.count_cluster_size_at(array([0,0])) == 0 or self.flag > 0):
+                if self.arrived() and (self.count_cluster_size_at(array([0,0])) == 0 or self.internal_flag):
                     self.debugInformation = "Arrived and 0,0 is empty"
-                    direction = [array([0,d]), array([0,-d])]
                     
                     most_popular = max(direction, key = self.count_cluster_size_at)
 
-                    self.set_destination(most_popular)
-
-                    if self.arrived() and self.all_bees_in_cluster(self.destination):
-                        self.update_flag()
-                        self.debugInformation = "Arrived at most popular and everyone is here"
-
-                    if self.flag > 0 and self.all_bees_raised_flag():
-                        self.phase = 6
+                    if not self.internal_flag:
+                        self.set_destination(most_popular)
+                    else:
                         self.set_destination(None)
-                        self.debugInformation = "Everyone has raised flag"
+
+                    if self.arrived() and self.all_bees_in_cluster(self.destination) and not self.internal_flag:
+                        self.update_flags(self.destination)
+                        self.debugInformation = "Arrived at most popular and everyone is here"
                         
-                        most_popular = min(direction, key=self.distance)
                         if most_popular[1] < 0:
                             self.flipy = True
                             self.position = array([self.position[0],-self.position[1]])
-                            
+
+                        self.order = self.determine_order()
+
+                        if most_popular[1] < 0:
+                            self.flipy = False
+                            self.position = array([self.position[0],-self.position[1]])
+
+
+                if self.consensus_reached() and self.internal_flag and len(com) < 8:
+                    self.phase = 4
+                    self.set_destination(None)
+                    self.debugInformation = "Everyone has raised flag"
+                    self.internal_flag = False
+                    
+                    most_popular = min(direction, key=self.distance)
+                    if most_popular[1] < 0:
+                        self.flipy = True
+                        self.position = array([self.position[0],-self.position[1]])
 
             elif self.phase == 4:
-                """ Move to ordering formation """
+                """ Move to formation """
+                d = int(self.cluster_radius*3) + 1
 
                 self.debugInformation = "Phase 4"
-                
-                if self.order_formation == None:
-                    self.order_formation = self.generate_order_formation(len(pos) + 1)
-                    self.set_destination(self.empty_position_in_order_formation())
 
-                if self.order is None and self.destination is not None:
-                    if self.arrived():
-                        if self.nr_of_bees_at(self.position) != 0 or self.nr_of_bees_at(self.position + array([0,1])) != 0:
-                            self.set_destination(self.empty_position_in_order_formation())
-                        elif self.nr_of_bees_at(self.position) == 0 and self.nr_of_bees_at(self.position + array([0,1])) == 0:
-                            self.debugInformation = "Found My Spot"
-                            self.set_destination(None)
-                elif self.destination is None and self.order is None and self.everyone_in_order_formation():
-                    self.set_destination(self.position + array([0,1]))
-                    self.flag = False
-                    for i in range(0,len(self.order_formation)):
-                        if array_equal(self.order_formation[i], self.position):
-                            self.order = i
-                            break
-
-                elif self.order is not None:
-                    if self.everyone_confirmed_order():
-                        self.set_destination(array([0,0]))
+                if self.proper_formation is None:
+                    """ Setting up formation build order """
+                    self.proper_formation = [ (x[0], x[1] + array([0,-d])) for x in normalize(buildorder(self.formation))]
                     
-                    if self.arrived() and array_equal(self.position, array([0,0])):
-                        if self.all_bees_are_here():
-                            self.flag = True
 
-                        if self.flag and (self.all_bees_raised_flag() or self.nr_of_bees_at(self.position)==0):
-                            self.phase = 5
-                            self.set_destination(None)
+                if self.destination is None and self.lower_orders_in_formation():
+                    self.set_destination(self.proper_formation[self.order][1])
+                else:
+                    if array_equal(self.destination,self.position):
+                        self.phase = 5
 
             elif self.phase == 5:
-                if self.destination is None:
-                    self.formation = self.normalize(self.formation)
-                    self.set_destination(self.formation[self.order])
-                else:
-                    if self.arrived():
-                        self.phase = 6
-
-            elif self.phase == 6:
                 self.lastmove = None
-                return (self.lastmove, {"flag":self.flag, "phase":self.phase,"order":self.order})
+                return (self.lastmove, {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})
                 
         else:
             if self.sleepCounter <= 0:
@@ -212,30 +203,26 @@ class GordonBeeCollision(BaseBee):
             else:
                 self.sleepCounter -= 1
             self.lastmove = None
-            return (array([0,0]), {"flag":self.flag, "phase":self.phase,"order":self.order,"position":self.position.copy() if self.position is not None else None,"move":array([0,0])})
+            return (array([0,0]), {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})
 
         m = self.move().copy()
         self.lastmove = m.copy()
-        return (m, {"flag":self.flag, "phase":self.phase,"order":self.order, "position":self.position.copy() if self.position is not None else None,"move":m.copy() if m is not None else None})
+        return (m, {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})
 
-    def normalize(self, l):
-        minx = l[0][0]
-        miny = l[0][1]
-        maxx = l[0][0]
-        maxy = l[0][1]
+    def lower_orders_in_formation(self):
+        if self.order == 0:
+            return True
 
-        for x,y in l:
-            if x > maxx:
-                maxx = x
-            if x < minx:
-                minx = x
-            if y > maxy:
-                maxy = y
-            if y < miny:
-                miny = y
+        rank = self.proper_formation[self.order][0]
+        
+        required = filter(lambda x: x[0] < rank, self.proper_formation)
 
-        mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
-        return [x - mod for x in l]
+        return all(map(lambda x: self.bee_at(x[1]), required))
+        
+    def lower_flags(self):        
+        self.flag = False
+        self.internal_flag = False
+        self.consensus = False
 
     def count_cluster_size_at(self, cluster_position):
         pos = self.perception[0].copy()
@@ -283,6 +270,7 @@ class GordonBeeCollision(BaseBee):
         return count
 
 
+
     def all_bees_in_cluster(self, cluster_position):
         pos, com, success = self.perception
         return self.count_cluster_size_at(cluster_position) == (len(pos)+1)   
@@ -317,19 +305,81 @@ class GordonBeeCollision(BaseBee):
 
         return sum(map(lambda x: array_equal(point,x),pos))
 
+    def bee_at(self, point):
+        """ Returns the number of bees at point """
+        """ Responsible for transformations """
+        pos, com, success = self.perception
+        
+        point = point.copy()
+        
+        if self.phase == 2:
+            point -= self.position
+        elif self.phase > 2:
+            point = self.transform(point - self.position)
+
+        return any(map(lambda x: array_equal(point,x),pos))
+
     def center_of_bees(self):
         """ Return the center of mass of the bees """
         pos, com, success = self.perception
         return around(sum(pos)/(len(pos) + 1))
 
-    def all_bees_are_here(self):
-        """ Returns true if all bees are at the same point. """
-        return False
-
-    def update_flag(self):
+    def update_flags(self, new_center = None):
         pos, com, success = self.perception
-        self.flag = 1 + self.nr_of_possible_neighbors - len(com) + sum(map(lambda x: x[1]["flag"] > 0, com))        
 
+        if not self.internal_flag:
+            self.internal_flag = True
+
+        if new_center is not None:
+            self.center_of_cluster = new_center.copy()
+
+        if self.position is not None:
+            relative = self.position - self.center_of_cluster
+        else:
+            relative = array([0,0]) - self.center_of_cluster
+
+        if array_equal(relative, array([0,0])):
+            if all(map(lambda x: x[1]["flag"],com)):
+                self.flag = True
+                self.consensus = True
+        elif relative[0] == relative[1]:
+            modx = 1 if relative[0] > 0 else -1
+            mody = 1 if relative[1] > 0 else -1
+            filter_function = lambda c: any(map(lambda x: array_equal(x,c[0]),map(array,[(modx,0),(modx,mody),(0,mody)])))
+            if all(map(lambda x: x[1]["flag"], filter(filter_function,com))):
+                self.flag = True
+        elif relative[0] > relative[1]:
+            modx = 1 if relative[0] > 0 else -1
+            f = list(filter(lambda x: array_equal(x,array([modx,0])), com))
+            if len(f) > 0:
+                if f[0][1]["flag"]:
+                    self.flag = True
+            else:
+                self.flag = True
+        else:
+            mody = 1 if relative[1] > 0 else -1
+            f = list(filter(lambda x: array_equal(x,array([0,mody])), com))
+            if len(f) > 0:
+                if f[0][1]["flag"]:
+                    self.flag = True
+            else:
+                self.flag = True
+                
+        if any(map(lambda c: c[1]["consensus"],com)):
+            self.consensus = True
+
+    def consensus_reached(self):
+        """ Returns true if all bees have raised their flag"""
+        pos, com, success = self.perception
+        if len(com) > 0 and self.time > 1:
+            try:
+                return all(map(lambda x: x[1]["consensus"], com)) and self.consensus
+            except:
+                import code
+                code.interact(local=locals())
+        else:
+            return True
+        
     def all_bees_raised_flag(self):
         """ Returns true if all bees have raised their flag"""
         pos, com, success = self.perception
@@ -341,6 +391,10 @@ class GordonBeeCollision(BaseBee):
     def any_bee_raised_flag(self):
         pos, com, success = self.perception
         return any(map(lambda x: x[1]["flag"] == (self.nr_of_possible_neighbors + 1) if x[1] is not None else False, com))
+
+    def any_bee_raised_something(self):
+        pos, com, success = self.perception
+        return any(map(lambda x: x[1]["flag"] > 0 if x[1] is not None else False, com))
     
     def all_bees_lowered_flag(self):
         """ Returns true if all bees have raised their flag"""
@@ -407,6 +461,22 @@ class GordonBeeCollision(BaseBee):
         if q is None:
             q = self.position
         return pow(pow(p[0]-q[0],2) + pow(p[1]-q[1],2), 0.5)
+
+    def determine_order(self):
+        pos, com, success = self.perception
+        pos.append(array([0,0]))
+
+        pos = list(map(self.transform2, pos))
+
+        leaveorder = list(reversed(buildorder(pos)))
+
+        for i in range(0,len(leaveorder)):
+            if array_equal(array([0,0]),leaveorder[i][1]):
+                return i
+            i += 1
+
+        print("HOLYSHITWTFBBQ! (This should not happen)")
+                
     
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
@@ -449,17 +519,29 @@ class GordonBeeCollision(BaseBee):
             move = array([0,0])
             self.closest_i_could_get = None
 
-        if self.selected:
-            print(path)
-            print(reachable)
-            print(pos)
-            print(point)
-
-        return move
-
+        return move       
 
 ### Static Functions ###
 
+def normalize(l):
+    minx = l[0][1][0]
+    miny = l[0][1][1]
+    maxx = l[0][1][0]
+    maxy = l[0][1][1]
+
+    for z in l:
+        x,y = z[1]
+        if x > maxx:
+            maxx = x
+        if x < minx:
+            minx = x
+        if y > maxy:
+            maxy = y
+        if y < miny:
+            miny = y
+
+    mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
+    return [(x[0], x[1] - mod) for x in l]
     
 def find_by_array(l, a):
     for i in range(0,len(l)):
