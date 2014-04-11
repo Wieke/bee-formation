@@ -162,18 +162,18 @@ class GordonBee(BaseBee):
                 else:
                     if self.arrived():
                         self.phase = 6
-
-            elif self.phase == 6:
-                return (None, {"flag":self.flag, "phase":self.phase, "order":self.order})
-                
+                        
         else:
             if self.sleepCounter <= 0:
                 self.awake = True
                 self.sleepCounter = 0
             else:
                 self.sleepCounter -= 1
-                
-        return (self.move().copy(), {"flag":self.flag, "phase":self.phase, "order":self.order})
+
+        if self.phase == 6:
+            return (None, {"flag":self.flag, "phase":self.phase, "order":self.order})
+        else:
+            return (self.move().copy(), {"flag":self.flag, "phase":self.phase, "order":self.order})
 
     def normalize(self, l):
         minx = l[0][0]

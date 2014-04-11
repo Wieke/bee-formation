@@ -6,6 +6,7 @@ __pycache__/
 *.*~
 \#*.*\#
 *.save
+*.csv
 
 # C extensions
 *.so

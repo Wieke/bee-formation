@@ -77,10 +77,6 @@ class GordonBeeCollision(BaseBee):
                     self.phase = 2
                     self.set_destination(None)
                     self.internal_flag = False
-
-                if self.time > 180 and not self.consensus:
-                    import code
-                    code.interact(local=locals())
                                             
             elif self.phase == 2:
                 """Move towards most popular [1,0]"""
@@ -191,19 +187,22 @@ class GordonBeeCollision(BaseBee):
                 else:
                     if array_equal(self.destination,self.position):
                         self.phase = 5
-
-            elif self.phase == 5:
-                self.lastmove = None
-                return (self.lastmove, {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})
-                
         else:
             if self.sleepCounter <= 0:
                 self.awake = True
                 self.sleepCounter = 0
             else:
                 self.sleepCounter -= 1
+            
             self.lastmove = None
-            return (array([0,0]), {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})
+            if self.phase == 5:
+                return (None, {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})
+            else:
+                return (array([0,0]), {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})
+
+        if self.phase == 5:
+            self.lastmove = None
+            return (None, {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})
 
         m = self.move().copy()
         self.lastmove = m.copy()
@@ -372,11 +371,7 @@ class GordonBeeCollision(BaseBee):
         """ Returns true if all bees have raised their flag"""
         pos, com, success = self.perception
         if len(com) > 0 and self.time > 1:
-            try:
-                return all(map(lambda x: x[1]["consensus"], com)) and self.consensus
-            except:
-                import code
-                code.interact(local=locals())
+            return all(map(lambda x: x[1]["consensus"], com)) and self.consensus
         else:
             return True
         
@@ -476,17 +471,45 @@ class GordonBeeCollision(BaseBee):
             i += 1
 
         print("HOLYSHITWTFBBQ! (This should not happen)")
-                
-    
+
+    def randomStep(self):
+        possible_steps = list(map(array,
+                                  [(1,0),
+                                   (0,1),
+                                   (-1,0)
+                                   (0,-1)]))
+
+        pos, com, success = self.perception
+        pos = pos.copy()
+        for i in self.proper_formation:
+            pos.append(self.transform(i[1] - self.position))
+
+        no_go = lambda x: any(map(lambda y: array_equal(x,y),pos))
+
+        for i in range(0,len(possible_steps)):
+            if not no_go(i):
+                return i
+
+        return array([0,0])
+            
+        
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
         """ Responsible for transformations """
-        pos, com, success = self.perception
+        pos, com, success = self.perception        
         if self.destination is None:
             return array([0,0])
 
         if not self.awake:
             return array([0,0])
+
+
+        if self.phase == 4 and self.proper_formation is not None:
+            no_go = []
+            for i in range(0,len(self.proper_formation)):
+                if i != self.order and self.proper_formation[i][0] == self.proper_formation[self.order][0]:
+                    no_go.append(self.transform(self.proper_formation[i][1] - self.position))
+            pos = merge_array_lists(pos, no_go)
 
         if self.phase == 2:
             point = self.destination.copy() - self.position
@@ -498,7 +521,7 @@ class GordonBeeCollision(BaseBee):
         if not array_equal(point, array([0,0])):
             reachable, path = findpathtoclosest(array([0,0]), point, pos)
             if len(path) == 0:
-                move = array([0,0])
+                move = array([0,0])                    
             else:
                 move = path[0]
             if not reachable and not array_equal(move,array([0,0])):
@@ -515,9 +538,20 @@ class GordonBeeCollision(BaseBee):
                     self.closest_i_could_get = array([0,0])
             else:
                 self.closest_i_could_get = None
+
+            if reachable and self.phase == 4 and array_equal(move,array([0,0])):
+                move = self.randomStep()
+                self.closest_i_could_get = None
+
         else:
             move = array([0,0])
             self.closest_i_could_get = None
+
+        
+        
+        if self.selected:
+            import code
+            code.interact(local=locals())
 
         return move       
 
@@ -572,3 +606,11 @@ def calculate_cluster_radius(n):
     
     distance = pow(pow(x, 2) + pow(y,2), 0.5)
     return distance
+
+def merge_array_lists(A,B):
+    out = A.copy()
+    is_in = lambda x: any(map(lambda y: array_equal(y,x),out))
+    for x in B:
+        if not is_in(x):
+            out.append(x)
+    return out

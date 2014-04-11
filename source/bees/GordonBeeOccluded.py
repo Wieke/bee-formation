@@ -42,6 +42,7 @@ class GordonBeeOccluded(BaseBee):
         self.time += 1
         self.perception = perception
         pos, com, success = self.perception
+        
         if self.awake:
             
             if self.phase == 1:
@@ -55,8 +56,11 @@ class GordonBeeOccluded(BaseBee):
                     self.countdown = 10
                 else:
                     self.destination = None
-                    self.countdown -= 10
+                    self.countdown -= 1
 
+                if self.flag:
+                    self.destination = None
+                
                 if self.all_bees_are_here():
                     self.flag = True
                     self.nr_of_bees = len(pos)
@@ -159,7 +163,6 @@ class GordonBeeOccluded(BaseBee):
                         if self.visible_free_spot():
                             self.destination = self.empty_position_in_order_formation()
                         elif self.everyone_in_order_formation():
-                            print("I AM IT")
                             self.order = 0
                             self.it = True
                             self.flag = True
@@ -202,9 +205,6 @@ class GordonBeeOccluded(BaseBee):
                 else:
                     if self.arrived():
                         self.phase = 6
-
-            elif self.phase == 6:
-                return (None, {"flag":self.flag, "phase":self.phase, "order":self.order})
                 
         else:
             if self.sleepCounter <= 0:
@@ -213,8 +213,8 @@ class GordonBeeOccluded(BaseBee):
             else:
                 self.sleepCounter -= 1
 
-        if self.order_formation is not None:                
-            return (self.move().copy(), {"flag":self.flag, "phase":self.phase, "order":self.order, "free":len(self.order_formation)})
+        if self.phase == 6:
+            return (None, {"flag":self.flag, "phase":self.phase, "order":self.order})
         else:
             return (self.move().copy(), {"flag":self.flag, "phase":self.phase, "order":self.order})
 
