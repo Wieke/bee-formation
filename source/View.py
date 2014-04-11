@@ -380,8 +380,10 @@ class View(object):
                 #Determene frame of reference
                 
                 #Draw occlusion shading
-                if self.world.constraints["occlusion"]:
-                    self.drawocclusionshading(cc,state)
+                #### DISABLED BECAUSE THE CURRENT IMPLEMENTATION
+                #### IS FUCKING COMPUTATIONALLY EXPENSIVE
+                #if self.world.constraints["occlusion"]:
+                #    self.drawocclusionshading(cc,state)
                 
                 #Draw Grid
                 self.drawgrid(cc)

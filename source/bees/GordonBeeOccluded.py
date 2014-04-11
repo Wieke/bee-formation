@@ -149,20 +149,41 @@ class GordonBeeOccluded(BaseBee):
                         self.destination = array([0,0])
                     self.flag = False
 
+                if self.selected:
+                    print("===",self.time,"===")
+
                 if not self.it and not self.stayput:
+                    if self.selected:
+                        print("Not It, Not stayput")
                     if self.arrived() and self.nr_of_bees_at(self.position)==0 and not array_equal(self.position, array([0,0])):
+                        if self.selected:
+                            print("    Arrived, Nr_of_bees here 0, not at 0,0")
                         self.stayput = True
                     elif self.arrived() and self.nr_of_bees_at(self.position) > 0 and self.all_bees_raised_flag():
+                        if self.selected:
+                            print("    Arrived, nr_of_bees here > 0, all bees raised flag.")
                         self.stayput = True
                     elif self.nr_of_bees_at(self.destination) > 0 and not array_equal(self.destination, array([0,0])) and self.i_can_see(self.destination):
+                        if self.selected:
+                            print("    Nr of bees at destination > 0, destination not 0,0, can see destination")
                         if self.visible_free_spot():
+                            if self.selected:
+                                print("        Visible free spot!")
                             self.destination = self.empty_position_in_order_formation()
                         else:
+                            if self.selected:
+                                print("        No visible free spot!")
                             self.destination = array([0,0])
                     elif self.arrived() and array_equal(self.position, array([0,0])):
+                        if self.selected:
+                            print("    Arrived, at 0,0")
                         if self.visible_free_spot():
+                            if self.selected:
+                                print("        Can See Free Spot")
                             self.destination = self.empty_position_in_order_formation()
                         elif self.everyone_in_order_formation():
+                            if self.selected:
+                                print("        Everyone in formation, I am it!")
                             self.order = 0
                             self.it = True
                             self.flag = True
@@ -269,6 +290,9 @@ class GordonBeeOccluded(BaseBee):
         self.debugInformation = str(self.order_formation)
 
     def visible_free_spot(self):
+        if self.selected:
+            import code
+            code.interact(local=locals())
         return len(list(filter(lambda x: self.nr_of_bees_at(x) == 0 and self.i_can_see(x), self.order_formation))) > 0
 
     def everyone_in_order_formation(self):
