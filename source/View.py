@@ -187,12 +187,12 @@ class View(object):
         for pos,bee,_,_ in state:
             key = (pos[0],pos[1])
             if key in todraw:
-                if bee.awake:
+                if bee.flag:
                     todraw[key] = (todraw[key][0],todraw[key][1]+1, todraw[key][2]+1, todraw[key][3])
                 else:
                     todraw[key] = (todraw[key][0],todraw[key][1]+1, todraw[key][2], todraw[key][3]+1)                    
             else:
-                if bee.awake:
+                if bee.flag:
                     todraw[key]  = (pos,1,1,0)
                 else:
                     todraw[key]  = (pos,1,0,1)

@@ -36,18 +36,31 @@ def formations():
         del f[x - 1]
     formations.append(f)
 
-    i = 1001
+    i = 101
     random.seed(i)
     formations.append(random.sample(
         list(iterprod(arange(0,5),arange(0,5)))
+        , 10))
+    i += 1
+
+    random.seed(i)
+    formations.append(random.sample(
+        list(iterprod(arange(0,10),arange(0,10)))
+        , 10))
+    i +=1
+    
+    random.seed(i)
+    formations.append(random.sample(
+        list(iterprod(arange(0,10),arange(0,10)))
         , 15))
     i += 1
 
     random.seed(i)
     formations.append(random.sample(
-        list(iterprod(arange(0,5),arange(0,5)))
+        list(iterprod(arange(0,15),arange(0,15)))
         , 15))
     i +=1
+    
     
     return formations
 
@@ -98,7 +111,7 @@ def do_work(a):
               True)
 
     i = 0
-    while not w.finished and  i < 1000:
+    while not w.finished and  i < 2000:
         w.stepForward()
         i += 1
 
@@ -110,22 +123,16 @@ def do_work(a):
         #print(seed, beetype.__name__,"formation",formnumber, "done!")
         return [seed, beetype.__name__, formnumber, w.totalStates, w.timeToFinish, w.beeSteps, w.sizeOfWorld]        
     
-##if __name__=="__main__":
-##    with open('results.csv', 'w') as csvfile:
-##        file = writer(csvfile)
-##        file.writerow(["seed","beetype","formation","totalStates","timeToFinish","beeSteps","sizeOfWorld"])
-##
-##    p = Pool(8)
-##    
-##    for seed in range(0,25):
-##        res = p.map(do_work, worlds(seed))
-##
-##        with open('results.csv', 'a') as csvfile:
-##            file = writer(csvfile)
-##            for row in res:
-##                file.writerow(row)
+if __name__=="__main__":
+    with open('results.csv', 'w') as csvfile:
+        file = writer(csvfile)
+        file.writerow(["seed","beetype","formation","totalStates","timeToFinish","beeSteps","sizeOfWorld"])
 
+    p = Pool(8)
+    for seed in range(0,2): ## ABOUT A MINUTE PER SEED
+        res = p.map(do_work, worlds(seed))
 
-
-p = Pool(8)
-res = p.map(do_work, worlds(0))
+        with open('results.csv', 'a') as csvfile:
+            file = writer(csvfile)
+            for row in res:
+                file.writerow(row)

@@ -186,11 +186,20 @@ class GordonBeeCollision(BaseBee):
                     self.proper_formation = [ (x[0], x[1] + array([0,-d])) for x in normalize(buildorder(self.formation))]
                     
 
+
+                if all(map(lambda x: self.bee_at(x[1]), self.proper_formation)):
+                    self.phase = 5
+
                 if self.destination is None and self.lower_orders_in_formation():
+                    self.set_destination(self.proper_formation[self.order][1])
+                if self.destination is None and all(map(lambda x: self.bee_at(x[1]), self.proper_formation[0:self.order])):
                     self.set_destination(self.proper_formation[self.order][1])
                 else:
                     if array_equal(self.destination,self.position):
                         self.phase = 5
+                if self.selected:
+                    import code
+                    code.interact(local=locals())
         else:
             if self.sleepCounter <= 0:
                 self.awake = True
@@ -362,7 +371,7 @@ class GordonBeeCollision(BaseBee):
                 self.flag = True
         elif abs(relative[0]) > abs(relative[1]):
             modx = 1 if relative[0] > 0 else -1
-            f = list(filter(lambda x: array_equal(x,array([modx,0])), com))
+            f = list(filter(lambda x: array_equal(x[0],array([modx,0])), com))
             if len(f) > 0:
                 if f[0][1]["flag"]:
                     self.flag = True
@@ -370,7 +379,7 @@ class GordonBeeCollision(BaseBee):
                 self.flag = True
         else:
             mody = 1 if relative[1] > 0 else -1
-            f = list(filter(lambda x: array_equal(x,array([0,mody])), com))
+            f = list(filter(lambda x: array_equal(x[0],array([0,mody])), com))
             if len(f) > 0:
                 if f[0][1]["flag"]:
                     self.flag = True
