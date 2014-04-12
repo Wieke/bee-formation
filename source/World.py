@@ -3,6 +3,7 @@ import time
 from random import *
 import itertools
 import numpy as np
+from math import floor
 
 class World(object):
 
@@ -217,16 +218,6 @@ def linfunc(p1,p2):
 
     return lambda x: m*x+b
 
-def linfuncinv(p1,p2):
-    y1, x1 = p1
-    y2, x2 = p2
-
-    m = (y2 - y1)/(x2 - x1)
-
-    b = y1 - m*x1
-
-    return lambda x: m*x+b
-
 def lineofsight(p1, p2, positions):
     if np.array_equal(p1,p2):
         return True
@@ -234,24 +225,22 @@ def lineofsight(p1, p2, positions):
     x1, y1 = p1
     x2, y2 = p2
 
-    if abs(x1-x2) > abs(y1-y2):
-        f = linfunc(p1,p2)
-        for x in range(min(x1,x2)+1, max(x1,x2)):
-            pl = np.array([x, int(f(x))])
-            pu = np.array([x, int(f(x)+0.5)])
-            if any(map(lambda x: np.array_equal(x,pu), positions)):
-                return False
-            if any(map(lambda x: np.array_equal(x,pl), positions)):
-                return False
-    else:
-        f = linfuncinv(p2,p1)
-        for y in range(min(y1,y2)+1, max(y1,y2)):
-            pl = np.array([int(f(y)),y])
-            pu = np.array([int(f(y)+0.5),y])             
-            if any(map(lambda x: np.array_equal(x,pu), positions)):
-                return False
-            if any(map(lambda x: np.array_equal(x,pl), positions)):
-                return False
+    if abs(x1-x2) < abs(y1-y2):
+        flipxy = lambda q:np.dot(np.array([[0,1],[1,0]]),q) 
+        p1 = flipxy(p1)
+        p2 = flipxy(p2)
+        positions = list(map(flipxy, positions))
+        x1, y1 = p1
+        x2, y2 = p2
+        
+    f = linfunc(p1,p2)
+    for x in range(min(x1,x2)+1, max(x1,x2)):
+        pl = np.array([x, floor(f(x))])
+        pu = np.array([x, floor(f(x)+0.5)])
+        if any(map(lambda x: np.array_equal(x,pu), positions)):
+            return False
+        if any(map(lambda x: np.array_equal(x,pl), positions)):
+            return False
     return True
 
 def findCollisions(new):

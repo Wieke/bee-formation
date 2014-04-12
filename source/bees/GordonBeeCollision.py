@@ -5,7 +5,7 @@ from BaseBee import BaseBee
 from numpy import array, array_equal, around, dot, arange
 from sys import maxsize
 from itertools import product as iterprod
-from math import ceil
+from math import ceil, floor
 from pathfinding import findpathtoclosest
 from formation import buildorder
 
@@ -58,8 +58,11 @@ class GordonBeeCollision(BaseBee):
             self.lastmove = None
         
         if self.awake:
+                    
             if self.phase == 1:
                 """Move towards the center of mass"""
+
+
 
                 if self.internal_flag:
                     self.update_flags()                
@@ -73,24 +76,25 @@ class GordonBeeCollision(BaseBee):
                 else:
                     self.set_destination(None)
                 
-                if self.consensus_reached() and self.internal_flag and len(com) < 8:
+                if self.consensus_reached() and self.internal_flag and self.way_out():
                     self.phase = 2
                     self.set_destination(None)
                     self.internal_flag = False
+                    self.lower_flags()
+
                                             
             elif self.phase == 2:
                 """Move towards most popular [1,0]"""
-                d = int(self.cluster_radius*3) + 1
+                d = floor(self.cluster_radius*3) + 1
                 direction = [array([0,d]), array([d,0]), array([0,-d]), array([-d,0])]
+                
                 if self.destination is None and not self.internal_flag:
                     self.set_destination(array([d,0]))
                     self.debugInformation = "Moving to 3*cluster_radius,0"
-                    self.lower_flags()
-
                 if self.internal_flag:
                     self.update_flags()
 
-                if self.arrived() and (self.count_cluster_size_at(array([0,0])) == 0 or self.internal_flag):
+                if self.arrived() and (self.count_cluster_size_at(array([0,0])) == 0 or self.internal_flag) and not (self.consensus_reached() and len(com) > 0):
                     self.debugInformation = "Arrived and 0,0 is empty"                    
                     most_popular = max(direction, key = self.count_cluster_size_at)
 
@@ -103,11 +107,12 @@ class GordonBeeCollision(BaseBee):
                         self.update_flags(self.destination)
                         self.debugInformation = "Arrived at most popular and everyone is here"
 
-                if self.consensus_reached() and self.internal_flag and len(com) < 8:
+                if self.consensus_reached() and self.internal_flag and self.way_out():
                     self.phase = 3
                     self.set_destination(None)
                     self.debugInformation = "Everyone has raised flag"
                     self.internal_flag = False
+                    self.lower_flags()
 
                     most_popular = min(direction, key=self.distance)
                     
@@ -125,17 +130,16 @@ class GordonBeeCollision(BaseBee):
 
             elif self.phase == 3:
                 """Move towards most popular [0,1]"""
-                d = int(self.cluster_radius*3) + 1
+                d = floor(self.cluster_radius*3) + 1
                 direction = [array([0,d]), array([0,-d])]
                 if self.destination is None and not self.internal_flag:
                     self.set_destination(array([0,d]))
                     self.debugInformation = "Moving to 0,1"
-                    self.lower_flags()
 
                 if self.internal_flag:
                     self.update_flags()
                     
-                if self.arrived() and (self.count_cluster_size_at(array([0,0])) == 0 or self.internal_flag):
+                if self.arrived() and (self.count_cluster_size_at(array([0,0])) == 0 or self.internal_flag) and not (self.consensus_reached() and len(com) > 0):
                     self.debugInformation = "Arrived and 0,0 is empty"
                     
                     most_popular = max(direction, key = self.count_cluster_size_at)
@@ -160,7 +164,7 @@ class GordonBeeCollision(BaseBee):
                             self.position = array([self.position[0],-self.position[1]])
 
 
-                if self.consensus_reached() and self.internal_flag and len(com) < 8:
+                if self.consensus_reached() and self.internal_flag and self.way_out():
                     self.phase = 4
                     self.set_destination(None)
                     self.debugInformation = "Everyone has raised flag"
@@ -173,7 +177,7 @@ class GordonBeeCollision(BaseBee):
 
             elif self.phase == 4:
                 """ Move to formation """
-                d = int(self.cluster_radius*3) + 1
+                d = floor(self.cluster_radius*3) + 1
 
                 self.debugInformation = "Phase 4"
 
@@ -217,7 +221,13 @@ class GordonBeeCollision(BaseBee):
         required = filter(lambda x: x[0] < rank, self.proper_formation)
 
         return all(map(lambda x: self.bee_at(x[1]), required))
+
+    def way_out(self):
+        pos, com, success = self.perception
+        not_in = lambda x: not any(map(lambda y: array_equal(y,x), pos))
+        return any(map(not_in, [array([0,1]),array([0,-1]),array([1,0]),array([-1,0])]))
         
+    
     def lower_flags(self):        
         self.flag = False
         self.internal_flag = False
@@ -268,6 +278,9 @@ class GordonBeeCollision(BaseBee):
 
         return count
 
+
+
+        
 
 
     def all_bees_in_cluster(self, cluster_position):
@@ -333,7 +346,7 @@ class GordonBeeCollision(BaseBee):
             self.center_of_cluster = new_center.copy()
 
         if self.position is not None:
-            relative = self.position - self.center_of_cluster
+            relative = self.transform(self.position - self.center_of_cluster)
         else:
             relative = array([0,0]) - self.center_of_cluster
 
@@ -341,13 +354,13 @@ class GordonBeeCollision(BaseBee):
             if all(map(lambda x: x[1]["flag"],com)):
                 self.flag = True
                 self.consensus = True
-        elif relative[0] == relative[1]:
+        elif abs(relative[0]) == abs(relative[1]):
             modx = 1 if relative[0] > 0 else -1
             mody = 1 if relative[1] > 0 else -1
             filter_function = lambda c: any(map(lambda x: array_equal(x,c[0]),map(array,[(modx,0),(modx,mody),(0,mody)])))
             if all(map(lambda x: x[1]["flag"], filter(filter_function,com))):
                 self.flag = True
-        elif relative[0] > relative[1]:
+        elif abs(relative[0]) > abs(relative[1]):
             modx = 1 if relative[0] > 0 else -1
             f = list(filter(lambda x: array_equal(x,array([modx,0])), com))
             if len(f) > 0:
@@ -366,6 +379,10 @@ class GordonBeeCollision(BaseBee):
                 
         if any(map(lambda c: c[1]["consensus"],com)):
             self.consensus = True
+
+        if  self.flag and self.selected:
+            import code
+            code.interact(local=locals())
 
     def consensus_reached(self):
         """ Returns true if all bees have raised their flag"""
@@ -410,22 +427,6 @@ class GordonBeeCollision(BaseBee):
                 return array_equal(self.closest_i_could_get, self.position)
             else:            
                 return array_equal(self.destination, self.position)
-
-
-    def generate_order_formation(self, n):
-        mindist = maxsize
-        for i in range(1,n):
-            if abs(int(n/i + 1) - (i*2 -1)) < mindist:
-                mindist = abs(int(n/i + 0.5) - (i*2 -1))
-            else:
-                y = int(n/(i - 1) + 1)
-                x = i - 1
-                break
-
-        l = list(array(x) for x in iterprod(arange(-1*int(y/2),int(y/2)+1),
-                                               arange(-1*int((x*2-1)/2), int((x*2-1)/2)+1, 2)))
-
-        return l[0:n]
 
     def set_destination(self, dest):
         if not array_equal(self.destination,dest):
@@ -491,7 +492,6 @@ class GordonBeeCollision(BaseBee):
                 return i
 
         return array([0,0])
-            
         
     def move(self):
         """ Determines direction to move in order to reach destination, updates position. """
@@ -520,6 +520,7 @@ class GordonBeeCollision(BaseBee):
 
         if not array_equal(point, array([0,0])):
             reachable, path = findpathtoclosest(array([0,0]), point, pos)
+            
             if len(path) == 0:
                 move = array([0,0])                    
             else:
@@ -547,13 +548,9 @@ class GordonBeeCollision(BaseBee):
             move = array([0,0])
             self.closest_i_could_get = None
 
-        
-        
-        if self.selected:
-            import code
-            code.interact(local=locals())
+        return move
+    
 
-        return move       
 
 ### Static Functions ###
 
@@ -574,7 +571,7 @@ def normalize(l):
         if y < miny:
             miny = y
 
-    mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
+    mod = array([floor(minx + (maxx - minx)/2),floor(miny + (maxy - maxy)/2)])
     return [(x[0], x[1] - mod) for x in l]
     
 def find_by_array(l, a):
@@ -584,7 +581,7 @@ def find_by_array(l, a):
     return None
 
 def calculate_cluster_radius(n):
-    width = int(pow(n,0.5))
+    width = floor(pow(n,0.5))
 
     if width % 2 == 0:
         width -= 1

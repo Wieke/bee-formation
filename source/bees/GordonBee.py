@@ -5,7 +5,7 @@ from BaseBee import BaseBee
 from numpy import array, array_equal, around, dot, arange
 from sys import maxsize
 from itertools import product as iterprod
-from math import ceil
+from math import ceil, floor
 
 class GordonBee(BaseBee):
     #Static methods
@@ -191,7 +191,7 @@ class GordonBee(BaseBee):
             if y < miny:
                 miny = y
 
-        mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
+        mod = array([floor(minx + (maxx - minx)/2),floor(miny + (maxy - maxy)/2)])
         return [x - mod for x in l]
 
     def everyone_in_order_formation(self):
@@ -263,15 +263,15 @@ class GordonBee(BaseBee):
     def generate_order_formation(self, n):
         mindist = maxsize
         for i in range(1,n):
-            if abs(int(n/i + 1) - (i*2 -1)) < mindist:
-                mindist = abs(int(n/i + 0.5) - (i*2 -1))
+            if abs(floor(n/i + 1) - (i*2 -1)) < mindist:
+                mindist = abs(floor(n/i + 0.5) - (i*2 -1))
             else:
-                y = int(n/(i - 1) + 1)
+                y = floor(n/(i - 1) + 1)
                 x = i - 1
                 break
 
-        l = list(array(x) for x in iterprod(arange(-1*int(y/2),int(y/2)+1),
-                                               arange(-1*int((x*2-1)/2), int((x*2-1)/2)+1, 2)))
+        l = list(array(x) for x in iterprod(arange(-1*floor(y/2),floor(y/2)+1),
+                                               arange(-1*floor((x*2-1)/2), floor((x*2-1)/2)+1, 2)))
 
         return l[0:n]
 

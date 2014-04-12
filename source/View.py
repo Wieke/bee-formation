@@ -196,7 +196,7 @@ class View(object):
                     todraw[key]  = (pos,1,1,0)
                 else:
                     todraw[key]  = (pos,1,0,1)
-            
+                    
         for pos,nr,awake,sleeping in todraw.values():
             x,y = self.f(pos)
 
@@ -205,7 +205,7 @@ class View(object):
                 cc.translate(x,y)
                 cc.scale(1/self.worldsize[0], 1/self.worldsize[1])
                 cc.arc(0,0,0.35,0, 2*pi)
-                cc.move_to(0,0)
+                cc.move_to(0,0)               
                 cc.restore()
 
                 if awake == 1:

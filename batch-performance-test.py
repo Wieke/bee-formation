@@ -36,12 +36,11 @@ def formations():
         del f[x - 1]
     formations.append(f)
 
-
-    i = 100001
+    i = 1001
     random.seed(i)
     formations.append(random.sample(
-        list(iterprod(arange(0,10),arange(0,10)))
-        , 25))
+        list(iterprod(arange(0,5),arange(0,5)))
+        , 15))
     i += 1
 
     random.seed(i)
@@ -79,14 +78,13 @@ def printformation(formation):
 
     print(out)
     
-def worlds(nr): ## Returns 24 tests per seed
+def worlds(seed): ## Returns 24 tests per seed
     worlds = []
     f = formations()
-    for i in range(0,nr):
-        for fn in range(0,len(f)):
-            #worlds.append((GB,f[fn].copy(),fn,i))
-            #worlds.append((GBO,f[fn].copy(),fn,i))
-            worlds.append((GBC,f[fn].copy(),fn,i))
+    for fn in range(0,len(f)):
+        #worlds.append((GB,f[fn].copy(),fn,seed))
+        #worlds.append((GBO,f[fn].copy(),fn,seed))
+        worlds.append((GBC,f[fn].copy(),fn,seed))
     return worlds
 
 def do_work(a):
@@ -100,27 +98,34 @@ def do_work(a):
               True)
 
     i = 0
-    while not w.finished or i > 1000:
+    while not w.finished and  i < 1000:
         w.stepForward()
+        i += 1
 
-    print(seed, beetype.__name__,"formation",formnumber, "done!")
-    if i > 1000:
-        print(seed, beetype.__name__, "formation", formnumber, "  DNF!")
-        
+
+    if not i < 1000:
+        #print(seed, beetype.__name__, "formation", formnumber, "  DNF!")
+        return [seed, beetype.__name__, formnumber, "DNF", "DNF", w.beeSteps, w.sizeOfWorld]        
+    else:
+        #print(seed, beetype.__name__,"formation",formnumber, "done!")
+        return [seed, beetype.__name__, formnumber, w.totalStates, w.timeToFinish, w.beeSteps, w.sizeOfWorld]        
     
-    return [seed, beetype.__name__, formnumber, w.totalStates, w.timeToFinish, w.beeSteps, w.sizeOfWorld, "DNF"]
+##if __name__=="__main__":
+##    with open('results.csv', 'w') as csvfile:
+##        file = writer(csvfile)
+##        file.writerow(["seed","beetype","formation","totalStates","timeToFinish","beeSteps","sizeOfWorld"])
+##
+##    p = Pool(8)
+##    
+##    for seed in range(0,25):
+##        res = p.map(do_work, worlds(seed))
+##
+##        with open('results.csv', 'a') as csvfile:
+##            file = writer(csvfile)
+##            for row in res:
+##                file.writerow(row)
 
-nr = 1
+
 
 p = Pool(8)
-res = p.map(do_work, worlds(nr))
-
-print(len(worlds(1)))
-print(len(worlds(2)))
-print(len(worlds(3)))
-
-with open('results.csv', 'w') as csvfile:
-    file = writer(csvfile)
-    file.writerow(["seed","beetype","formation","totalStates","timeToFinish","beeSteps","sizeOfWorld"])
-    for row in res:
-        file.writerow(row)
+res = p.map(do_work, worlds(0))

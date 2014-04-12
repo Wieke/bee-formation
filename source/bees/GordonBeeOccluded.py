@@ -6,7 +6,7 @@ from numpy import array, array_equal, around, dot, arange
 from sys import maxsize
 from itertools import product as iterprod
 from World import lineofsight
-from math import ceil
+from math import ceil,floor
 
 class GordonBeeOccluded(BaseBee):
     #Static methods
@@ -17,7 +17,7 @@ class GordonBeeOccluded(BaseBee):
         return "Gordon bee occluded"
 
     def comkeys():
-        return ["flag", "phase", "order", "free"]
+        return ["flag", "phase", "order", "free","it"]
     
     #Non-static methods
     def __init__(self, args):
@@ -34,6 +34,7 @@ class GordonBeeOccluded(BaseBee):
         self.order_formation = None
         self.it = False
         self.stayput = False
+        self.seeking = False
         self.time = 0
         self.nr_of_bees = 0
         self.countdown = 10
@@ -149,41 +150,25 @@ class GordonBeeOccluded(BaseBee):
                         self.destination = array([0,0])
                     self.flag = False
 
-                if self.selected:
-                    print("===",self.time,"===")
-
                 if not self.it and not self.stayput:
-                    if self.selected:
-                        print("Not It, Not stayput")
+                    if self.arrived() and not array_equal(self.position, array([0,0])):
+                        self.seeking = False
                     if self.arrived() and self.nr_of_bees_at(self.position)==0 and not array_equal(self.position, array([0,0])):
-                        if self.selected:
-                            print("    Arrived, Nr_of_bees here 0, not at 0,0")
                         self.stayput = True
                     elif self.arrived() and self.nr_of_bees_at(self.position) > 0 and self.all_bees_raised_flag():
-                        if self.selected:
-                            print("    Arrived, nr_of_bees here > 0, all bees raised flag.")
                         self.stayput = True
+##                    elif self.arrived() and self.nr_of_bees_at(self.position) > 0 and not array_equal(self.position,array([0,0])):
+##                        self.destination = array([0,0])
                     elif self.nr_of_bees_at(self.destination) > 0 and not array_equal(self.destination, array([0,0])) and self.i_can_see(self.destination):
-                        if self.selected:
-                            print("    Nr of bees at destination > 0, destination not 0,0, can see destination")
-                        if self.visible_free_spot():
-                            if self.selected:
-                                print("        Visible free spot!")
+                        if self.visible_free_spot() and self.seeking:
                             self.destination = self.empty_position_in_order_formation()
                         else:
-                            if self.selected:
-                                print("        No visible free spot!")
                             self.destination = array([0,0])
+                            self.seeking = True
                     elif self.arrived() and array_equal(self.position, array([0,0])):
-                        if self.selected:
-                            print("    Arrived, at 0,0")
-                        if self.visible_free_spot():
-                            if self.selected:
-                                print("        Can See Free Spot")
+                        if self.visible_free_spot(): 
                             self.destination = self.empty_position_in_order_formation()
                         elif self.everyone_in_order_formation():
-                            if self.selected:
-                                print("        Everyone in formation, I am it!")
                             self.order = 0
                             self.it = True
                             self.flag = True
@@ -210,14 +195,14 @@ class GordonBeeOccluded(BaseBee):
                             else:
                                 self.phase = 5
                                 self.destination = None
-                    else:
-                        if self.i_can_see(self.destination) and self.nr_of_bees_at(self.destination) == 0:
-                            self.order += 1
-                            if len(self.order_formation) > self.order:
-                                self.destination = self.order_formation[self.order]
-                            else:
-                                self.phase = 5
-                                self.destination = None
+##                    else:
+##                        if self.i_can_see(self.destination) and self.nr_of_bees_at(self.destination) == 0:
+##                            self.order += 1
+##                            if len(self.order_formation) > self.order:
+##                                self.destination = self.order_formation[self.order]
+##                            else:
+##                                self.phase = 5
+##                                self.destination = None
                                 
             elif self.phase == 5:
                 if self.destination is None:
@@ -237,7 +222,7 @@ class GordonBeeOccluded(BaseBee):
         if self.phase == 6:
             return (None, {"flag":self.flag, "phase":self.phase, "order":self.order})
         else:
-            return (self.move().copy(), {"flag":self.flag, "phase":self.phase, "order":self.order})
+            return (self.move().copy(), {"flag":self.flag, "phase":self.phase, "order":self.order,"it":self.it})
 
     def majority_is_here(self):
         pos, com, success = self.perception
@@ -266,7 +251,7 @@ class GordonBeeOccluded(BaseBee):
             if y < miny:
                 miny = y
 
-        mod = array([int(minx + (maxx - minx)/2),int(miny + (maxy - maxy)/2)])
+        mod = array([floor(minx + (maxx - minx)/2),floor(miny + (maxy - maxy)/2)])
         return [x - mod for x in l]
         
     def update_order_formation_availeble(self):
@@ -300,8 +285,7 @@ class GordonBeeOccluded(BaseBee):
         return all(map(one_at, self.order_formation))
 
     def empty_position_in_order_formation(self):
-        return min([ x for x in self.order_formation
-          if self.nr_of_bees_at(x) == 0 and not array_equal(x, array([0,0]))], key=self.distance)
+        return min(filter(lambda x: self.nr_of_bees_at(x) == 0 and self.i_can_see(x), self.order_formation),key=self.distance)
 
 
     def nr_of_bees_at(self, point):
@@ -374,7 +358,7 @@ class GordonBeeOccluded(BaseBee):
         if R % 2 == 0:
             R += 1
 
-        w = int(R/2) + 1
+        w = floor(R/2) + 1
         if w == 1:
             w = 2
 
