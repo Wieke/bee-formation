@@ -89,68 +89,14 @@ def printformation(formation):
     out = str(str(order))
     out = out.replace(" 0.","   ")
 
-    print(out)
+    s = ""
+
+    for line in order:
+        for character in line:
+            if character == 0:
+                s += " "
+            else:
+                s += "O"
+        s += "\\\\\n"
     
-def worlds(seed): ## Returns 24 tests per seed
-    worlds = []
-    f = formations()
-    for fn in range(0,len(f)):
-        worlds.append((GB,f[fn].copy(),fn,seed))
-        worlds.append((GBO,f[fn].copy(),fn,seed))
-        worlds.append((GBC,f[fn].copy(),fn,seed))
-    return worlds
-
-def do_work(a):
-    beetype, formation, formnumber, seed = a
-    w = World(beetype,
-              len(formation),
-              len(formation)*2,
-              len(formation)*2,
-              {"seed":0, "formation":formation},
-              seed,
-              True)
-
-    i = 0
-    while not w.finished and  i < 1000:
-        w.stepForward()
-        i += 1
-
-
-    if not i < 1000:
-        print(seed, beetype.__name__, "formation", formnumber, "  DNF!")
-        return [seed, beetype.__name__, formnumber, "DNF", "DNF", w.beeSteps, w.sizeOfWorld]        
-    else:
-        print(seed, beetype.__name__,"formation",formnumber, "done!")
-        return [seed, beetype.__name__, formnumber, w.totalStates, w.timeToFinish, w.beeSteps, w.sizeOfWorld]        
-
-def extract_startsize(a):
-    beetype, formation, formnumber, seed = a
-    w = World(beetype,
-              len(formation),
-              len(formation)*2,
-              len(formation)*2,
-              {"seed":0, "formation":formation},
-              seed,
-              True)
-    w.stepForward()
-    i = 0
-    return [seed, beetype.__name__, formnumber,  w.sizeOfWorld]   
-    
-if __name__=="__main__":
-    path = '/home/wieke/Dropbox/uniwerk/Bio-InspiredAlgorithms/Bio-InspiredAlgorithms Share/startSize.csv'
-    with open(path, 'w') as csvfile:
-        file = writer(csvfile)
-        file.writerow(["seed","beetype","formation","sizeOfWorld"])
-
-    res = []
-    
-    p = Pool(8)
-    for seed in range(0,100): ## ABOUT A MINUTE PER SEED
-        res += p.map(extract_startsize, worlds(seed))
-        print(seed)
-
-    with open(path, 'a') as csvfile:
-        file = writer(csvfile)
-        for row in res:
-            file.writerow(row)
-
+    print(s)

@@ -187,12 +187,12 @@ class View(object):
         for pos,bee,_,_ in state:
             key = (pos[0],pos[1])
             if key in todraw:
-                if bee.flag:
+                if bee.awake:
                     todraw[key] = (todraw[key][0],todraw[key][1]+1, todraw[key][2]+1, todraw[key][3])
                 else:
                     todraw[key] = (todraw[key][0],todraw[key][1]+1, todraw[key][2], todraw[key][3]+1)                    
             else:
-                if bee.flag:
+                if bee.awake:
                     todraw[key]  = (pos,1,1,0)
                 else:
                     todraw[key]  = (pos,1,0,1)
@@ -382,8 +382,8 @@ class View(object):
                 #Draw occlusion shading
                 #### DISABLED BECAUSE THE CURRENT IMPLEMENTATION
                 #### IS FUCKING COMPUTATIONALLY EXPENSIVE
-                #if self.world.constraints["occlusion"]:
-                #    self.drawocclusionshading(cc,state)
+                if self.world.constraints["occlusion"]:
+                    self.drawocclusionshading(cc,state)
                 
                 #Draw Grid
                 self.drawgrid(cc)
