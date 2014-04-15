@@ -7,3 +7,6 @@ Simulation of the formation of a pattern by autonomous agents based on [Discrete
 * Python 3
 * PyGObject (or PyGi)
 * PyCairo
+
+### Start
+Run source/BeeForm.py
