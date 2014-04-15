@@ -43,6 +43,13 @@ class GordonBeeOccluded(BaseBee):
         self.time += 1
         self.perception = perception
         pos, com, success = self.perception
+
+        if not self.awake:
+            if self.sleepCounter <= 0:
+                self.awake = True
+                self.sleepCounter = 0
+            else:
+                self.sleepCounter -= 1
         
         if self.awake:
             
@@ -157,8 +164,6 @@ class GordonBeeOccluded(BaseBee):
                         self.stayput = True
                     elif self.arrived() and self.nr_of_bees_at(self.position) > 0 and self.all_bees_raised_flag():
                         self.stayput = True
-##                    elif self.arrived() and self.nr_of_bees_at(self.position) > 0 and not array_equal(self.position,array([0,0])):
-##                        self.destination = array([0,0])
                     elif self.nr_of_bees_at(self.destination) > 0 and not array_equal(self.destination, array([0,0])) and self.i_can_see(self.destination):
                         if self.visible_free_spot() and self.seeking:
                             self.destination = self.empty_position_in_order_formation()
@@ -211,13 +216,7 @@ class GordonBeeOccluded(BaseBee):
                 else:
                     if self.arrived():
                         self.phase = 6
-                
-        else:
-            if self.sleepCounter <= 0:
-                self.awake = True
-                self.sleepCounter = 0
-            else:
-                self.sleepCounter -= 1
+
 
         if self.phase == 6:
             return (None, {"flag":self.flag, "phase":self.phase, "order":self.order})

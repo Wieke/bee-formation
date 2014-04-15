@@ -41,11 +41,19 @@ class GordonBeeCollision(BaseBee):
         self.internal_flag = False
         self.consensus = False
         self.center_of_cluster = None
+        self.stagnant = -1
+        self.lastposition = None
+        self.makingway = False
+        self.moving = 0
         
     def behave(self, perception):
         self.time += 1
         self.perception = perception
         pos, com, success = self.perception
+
+        if self.selected:
+            import code
+            code.interact(local=locals())
 
         if self.cluster_radius is None:
             self.cluster_radius = calculate_cluster_radius(len(pos) + 1)
@@ -56,7 +64,14 @@ class GordonBeeCollision(BaseBee):
             elif self.phase > 2:
                 self.position += self.transform2(self.lastmove)
             self.lastmove = None
-        
+            
+        if not self.awake:
+            if self.sleepCounter <= 0:
+                self.awake = True
+                self.sleepCounter = 0
+            else:
+                self.sleepCounter -= 1
+      
         if self.awake:
                     
             if self.phase == 1:
@@ -186,27 +201,46 @@ class GordonBeeCollision(BaseBee):
                     self.proper_formation = [ (x[0], x[1] + array([0,-d])) for x in normalize(buildorder(self.formation))]
                     
 
-
                 if all(map(lambda x: self.bee_at(x[1]), self.proper_formation)):
                     self.phase = 5
 
                 if self.destination is None and self.lower_orders_in_formation():
                     self.set_destination(self.proper_formation[self.order][1])
+                    self.lastposition = self.position.copy()
+                    self.stagnant = 0
                 if self.destination is None and all(map(lambda x: self.bee_at(x[1]), self.proper_formation[0:self.order])):
                     self.set_destination(self.proper_formation[self.order][1])
+                    self.lastposition = self.position.copy()
+                    self.stagnant = 0
                 else:
                     if array_equal(self.destination,self.position):
                         self.phase = 5
+
+                if array_equal(self.lastposition,self.position) and self.destination is not None:
+                    self.stagnant += 1
+                    if self.stagnant > 5:
+                        self.set_destination(array([0,0]))
+                        self.makingway = True
+                        self.stagnant = 0
+                        self.moving = 0
+                else:
+                    self.stagnant = 0
+
+                if self.stagnant > -1:
+                    self.lastposition = self.position.copy()
+
+                if self.makingway:
+                    self.moving += 1
+                    if self.moving > 3:
+                        self.set_destination(self.proper_formation[self.order][1])
+                        self.makingway = False
+
                 if self.selected:
                     import code
                     code.interact(local=locals())
-        else:
-            if self.sleepCounter <= 0:
-                self.awake = True
-                self.sleepCounter = 0
-            else:
-                self.sleepCounter -= 1
-            
+                    
+                
+        else:            
             self.lastmove = None
             if self.phase == 5:
                 return (None, {"flag":self.flag,"consensus":self.consensus,"phase":self.phase,"order":self.order})

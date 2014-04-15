@@ -37,8 +37,15 @@ class GordonBee(BaseBee):
         self.time += 1
         self.perception = perception
         pos, com, success = self.perception
+        
+        if not self.awake:
+            if self.sleepCounter <= 0:
+                self.awake = True
+                self.sleepCounter = 0
+            else:
+                self.sleepCounter -= 1
+
         if self.awake:
-            
             if self.phase == 1:
                 """Move towards the center of mass"""
 
@@ -155,6 +162,10 @@ class GordonBee(BaseBee):
                             self.phase = 5
                             self.destination = None
 
+                if self.selected:
+                    import code
+                    code.interact(local=locals())
+
             elif self.phase == 5:
                 if self.destination is None:
                     self.formation = self.normalize(self.formation)
@@ -162,13 +173,7 @@ class GordonBee(BaseBee):
                 else:
                     if self.arrived():
                         self.phase = 6
-                        
-        else:
-            if self.sleepCounter <= 0:
-                self.awake = True
-                self.sleepCounter = 0
-            else:
-                self.sleepCounter -= 1
+
 
         if self.phase == 6:
             return (None, {"flag":self.flag, "phase":self.phase, "order":self.order})
@@ -261,6 +266,7 @@ class GordonBee(BaseBee):
             return False
 
     def generate_order_formation(self, n):
+        n = n + 1
         mindist = maxsize
         for i in range(1,n):
             if abs(floor(n/i + 1) - (i*2 -1)) < mindist:
@@ -272,6 +278,13 @@ class GordonBee(BaseBee):
 
         l = list(array(x) for x in iterprod(arange(-1*floor(y/2),floor(y/2)+1),
                                                arange(-1*floor((x*2-1)/2), floor((x*2-1)/2)+1, 2)))
+
+        for i in range(0,len(l)):
+            if array_equal(l[i],array([0,0])):
+                del l[i]
+                break
+
+        n = n - 1
 
         return l[0:n]
 
